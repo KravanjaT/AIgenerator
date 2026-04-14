@@ -1,3 +1,11 @@
+// ─── WIZARD ────────────────────────────────────────────────
+function checkWizard(){
+  const q1=document.getElementById('q1')?.value.trim();
+  const q2=document.getElementById('q2')?.value.trim();
+  const btn=document.getElementById('btn-wizard');
+  if(btn) btn.disabled=!(q1&&q2);
+}
+
 // ─── UPLOADS ───────────────────────────────────────────────
 async function handleCharUpload(evt){
   const f=evt.target.files[0];if(!f) return;

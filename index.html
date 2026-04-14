@@ -25,12 +25,51 @@
 
 <!-- P0 -->
 <div class="phase active" id="phase-0">
-  <div class="phase-title">Za kaj je karakter?</div>
-  <div class="phase-sub">Niša in namen določita vse — obleko, svetlobo, ozadje, scene</div>
+  <div class="phase-title">Povej mi o svojem projektu</div>
+  <div class="phase-sub">4 kratka vprašanja — AI nastavi vse za tebe</div>
+
+  <div class="q-block">
+    <div class="q-num">1</div>
+    <div class="q-label">Kaj prodajaš ali oglašuješ?</div>
+    <input class="q-input" type="text" id="q1" placeholder="npr. krema za obraz, fitnes program, oblačila, aplikacija..." oninput="checkWizard()"/>
+  </div>
+
+  <div class="q-block">
+    <div class="q-num">2</div>
+    <div class="q-label">Komu je namenjeno?</div>
+    <input class="q-input" type="text" id="q2" placeholder="npr. ženskam 30-45 let, mladim podjetnicam, očetom z otroki..." oninput="checkWizard()"/>
+  </div>
+
+  <div class="q-block">
+    <div class="q-num">3</div>
+    <div class="q-label">Kje bo content objavljen?</div>
+    <div class="qchip-group" id="q3">
+      <button class="qchip active" data-val="instagram">Instagram</button>
+      <button class="qchip" data-val="tiktok">TikTok / Reels</button>
+      <button class="qchip" data-val="linkedin">LinkedIn</button>
+      <button class="qchip" data-val="spletna">Spletna stran</button>
+    </div>
+  </div>
+
+  <div class="q-block">
+    <div class="q-num">4</div>
+    <div class="q-label">Kakšen občutek mora dati?</div>
+    <div class="qchip-group" id="q4">
+      <button class="qchip active" data-val="trust">Zaupanje & strokovnost</button>
+      <button class="qchip" data-val="fun">Zabavno & sproščeno</button>
+      <button class="qchip" data-val="luxury">Luksuz & eleganca</button>
+      <button class="qchip" data-val="relax">Relax & lifestyle</button>
+      <button class="qchip" data-val="expert">Ekspert & fokusiran</button>
+    </div>
+  </div>
+
+  <button class="btn-wizard" id="btn-wizard" onclick="applyAnswers()" disabled>Ustvari karakter →</button>
+
+  <div class="wizard-result" id="wizard-result"></div>
 
   <div class="ai-panel" id="ai-panel-0">
-    <div class="ai-panel-title"><div class="ai-dot"></div>AI — opiši v enem stavku</div>
-    <textarea class="ai-textarea" id="ai-intent" placeholder="npr. ženska 30 let, mediteranski tip, svetlo rjavi lasje, kozmetika, Instagram brand ambassador..."></textarea>
+    <div class="ai-panel-title"><div class="ai-dot"></div>Claude AI način — opiši vse v enem stavku</div>
+    <textarea class="ai-textarea" id="ai-intent" placeholder="npr. ženska 30 let, mediteranski tip, kozmetika, Instagram, zaupanje..."></textarea>
     <div class="ai-btn-row">
       <button class="btn-ai" onclick="aiAnalyzeIntent()" id="btn-ai-intent">
         <span class="spinner" id="sp-intent" style="display:none"></span>
@@ -40,11 +79,6 @@
     <div class="ai-result" id="res-intent"></div>
   </div>
 
-  <div class="nlabel" id="manual-label">— ali izberi ročno —</div>
-  <div class="nlabel">Namen</div>
-  <div class="pgrid" id="pgrid"></div>
-  <div class="nlabel">Industrija / niša</div>
-  <div class="ngrid" id="ngrid"></div>
   <button class="btn-primary" id="btn-p0" onclick="goTo(1)" style="display:none">Nadaljuj → Videz karakterja</button>
 </div>
 

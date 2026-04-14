@@ -1,30 +1,121 @@
+// ─── 4 VPRAŠANJA → 10 SLOJEV ──────────────────────────────
+function applyAnswers(){
+  const q1=gv('q1').toLowerCase();
+  const q2=gv('q2').toLowerCase();
+  const q3=document.querySelector('#q3 .qchip.active')?.dataset.val||'instagram';
+  const q4=document.querySelector('#q4 .qchip.active')?.dataset.val||'trust';
+
+  // Niša iz q1
+  let niche='beauty';
+  if(q1.match(/krema|serum|ličila|parfum|šampon|koža|lepot|make|beauty|kosmetik/)) niche='beauty';
+  else if(q1.match(/hrana|recept|kuhanje|chef|restavr|kava|vino|pijač|čokolad/)) niche='food';
+  else if(q1.match(/fitnes|vadba|trening|šport|tek|joga|gym|zdravj|prehransk/)) niche='fitness';
+  else if(q1.match(/vrt|orodje|dom|pohišt|notranj|delavnic|čiščen|rastlin/)) niche='home';
+  else if(q1.match(/oblač|moda|čevlj|torb|nakit|fashion|stajl/)) niche='fashion';
+  else if(q1.match(/app|aplikacij|software|tech|ai|računalnik|telefon|digital/)) niche='tech';
+  else if(q1.match(/ura|avto|jahta|luksuz|premium|luxury|hotel|potovan/)) niche='luxury';
+  else if(q1.match(/otrok|igrač|starš|dojenč|šola/)) niche='kids';
+  else if(q1.match(/pes|mačka|hišn|žival|pet|veterinar/)) niche='pet';
+  ST.niche=niche;
+
+  // Spol in starost iz q2
+  let spol='woman',starost='32';
+  if(q2.match(/moški|mosk|men|man|oče|dad|brat/)) spol='man';
+  if(q2.match(/žensk|woman|girl|mama/)) spol='woman';
+  const ageM=q2.match(/(\d{2})\s*[-–]\s*(\d{2})|(\d{2})\s*let/);
+  if(ageM){const a=parseInt(ageM[1]||ageM[3]),b=parseInt(ageM[2]||ageM[3]);starost=String(Math.round((a+(b||a))/2));}
+  document.getElementById('spol').value=spol;
+  document.getElementById('starost').value=starost;
+
+  // Tip obraza iz q2
+  let face='mediteran';
+  if(q2.match(/skandinav|nordic|nem|avstr|šved|britansk/)) face='nordic';
+  else if(q2.match(/asian|azij|japan|korea|kitaj/)) face='eastasian';
+  else if(q2.match(/latin|brasil|špan|mehik/)) face='latin';
+  else if(q2.match(/afrišk|afric/)) face='african';
+  ST.face=face;
+  document.querySelectorAll('.ftcard').forEach(x=>x.classList.remove('active'));
+  document.getElementById('ft-'+face)?.classList.add('active');
+
+  // Platforma → aesthetic, objektiv, svetloba, grading
+  const platP={
+    instagram:{l01:1,l05:3,l06:1,l08:1,angle:0},
+    tiktok:   {l01:0,l05:0,l06:2,l08:2,angle:2},
+    linkedin: {l01:1,l05:3,l06:1,l08:1,angle:0},
+    spletna:  {l01:1,l05:3,l06:3,l08:1,angle:0},
+  };
+  const pp=platP[q3]||platP.instagram;
+
+  // Občutek → izraz, energija, mood, koža
+  const feelP={
+    trust:  {expr:4,l02:3,l10:3,l09:1},
+    fun:    {expr:4,l02:1,l10:2,l09:1},
+    luxury: {expr:0,l02:3,l10:4,l09:1},
+    relax:  {expr:4,l02:2,l10:0,l09:3},
+    expert: {expr:5,l02:3,l10:3,l09:1},
+  };
+  const pf=feelP[q4]||feelP.trust;
+
+  // Apliciraj
+  const nicheP=NPRESET[niche]||NPRESET.beauty;
+  setCI('c-l01',pp.l01);setCI('c-l02',pf.l02);setCI('c-l03',nicheP.l03);
+  setCI('c-l05',pp.l05);setCI('c-l06',pp.l06);setCI('c-l07',nicheP.l07||4);
+  setCI('c-l08',pp.l08);setCI('c-l09',pf.l09);setCI('c-l10',pf.l10);
+  setCI('c-expr',pf.expr);setCI('c-angle',pp.angle);
+  setCI('c-body',nicheP.bodyIdx||1);setCI('c-ostyle',nicheP.ostyle||1);
+
+  // Poklic
+  const poklicM={beauty:'lifestyle creator',food:'food blogger',fitness:'fitnes trener/ka',
+    home:'lifestyle blogger',fashion:'fashion influencer',tech:'tech creator',
+    luxury:'luxury lifestyle creator',kids:'parenting creator',pet:'pet owner & creator'};
+  if(!gv('poklic')) document.getElementById('poklic').value=poklicM[niche]||'content creator';
+
+  // Prikaz povzetka
+  const ni=NICHES.find(x=>x.id===niche);
+  const platL={instagram:'Instagram',tiktok:'TikTok / Reels',linkedin:'LinkedIn',spletna:'Spletna stran'};
+  const feelL={trust:'Zaupanje & strokovnost',fun:'Zabavno & sproščeno',luxury:'Luksuz',relax:'Relax & lifestyle',expert:'Ekspert'};
+  const res=document.getElementById('wizard-result');
+  res.innerHTML=`
+    <div style="font-size:11px;color:var(--green-light);font-weight:500;margin-bottom:7px">✓ AI je nastavil parametre</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px">
+      <div class="wr-row"><span class="wr-key">Niša</span><span class="wr-val">${ni?.name||niche}</span></div>
+      <div class="wr-row"><span class="wr-key">Karakter</span><span class="wr-val">${spol==='woman'?'Ženska':'Moški'}, ~${starost} let</span></div>
+      <div class="wr-row"><span class="wr-key">Platforma</span><span class="wr-val">${platL[q3]||q3}</span></div>
+      <div class="wr-row"><span class="wr-key">Občutek</span><span class="wr-val">${feelL[q4]||q4}</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:7px">Popravi detajle v naslednjem koraku ali nadaljuj →</div>`;
+  res.classList.add('vis');
+  document.getElementById('btn-p0').style.display='block';
+  lu();
+}
+
 // ─── INIT ─────────────────────────────────────────────────
 function initAll(){
-  document.getElementById('pgrid').innerHTML=PURPOSES.map(p=>
-    `<div class="pcard" id="pu-${p.id}" onclick="selPurpose('${p.id}')"><div class="pdot"></div><div class="pcard-name">${p.name}</div></div>`).join('');
-  document.getElementById('ngrid').innerHTML=NICHES.map(n=>
-    `<div class="ncard" id="ni-${n.id}" onclick="selNiche('${n.id}')"><div class="ncard-icon">${n.icon}</div><div class="ncard-name">${n.name}</div><div class="ncard-desc">${n.desc}</div></div>`).join('');
-  document.getElementById('pl-grid').innerHTML=PLACEMENTS.map(p=>
-    `<div class="plcard" id="pl-${p.id}" onclick="selPlacement('${p.id}')"><div class="plcard-icon">${p.icon}</div><div class="plcard-name">${p.name}</div></div>`).join('');
-  mkSw('sw-hair',HAIR_COLORS,'lbrown','selH');
-  mkSw('sw-eyes',EYE_COLORS,'gbrown','selE');
-  mkSw('sw-skin',SKIN_COLORS,'olive','selS');
-  document.getElementById('ftgrid').innerHTML=FACE_TYPES.map(f=>
-    `<div class="ftcard${f.id==='mediteran'?' active':''}" id="ft-${f.id}" onclick="selFT('${f.id}')"><div class="ftcard-icon">${f.icon}</div><div class="ftcard-lbl">${f.lbl}</div><div class="ftcard-desc">${f.desc.split(',')[0]}</div></div>`).join('');
-  // Chip groups
+  document.querySelectorAll('.qchip').forEach(c=>{
+    c.addEventListener('click',()=>{
+      const g=c.closest('.qchip-group');
+      g.querySelectorAll('.qchip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
   document.querySelectorAll('.cg').forEach(g=>{
     g.querySelectorAll('.chip').forEach(c=>{
       c.addEventListener('click',()=>{g.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');lu();});
     });
   });
-  // Enter on intent textarea
+  document.getElementById('pl-grid').innerHTML=PLACEMENTS.map(p=>
+    `<div class="plcard" id="pl-${p.id}" onclick="selPlacement('${p.id}')"><div class="plcard-icon">${p.icon}</div><div class="plcard-name">${p.name}</div></div>`
+  ).join('');
+  mkSw('sw-hair',HAIR_COLORS,'lbrown','selH');
+  mkSw('sw-eyes',EYE_COLORS,'gbrown','selE');
+  mkSw('sw-skin',SKIN_COLORS,'olive','selS');
+  document.getElementById('ftgrid').innerHTML=FACE_TYPES.map(f=>
+    `<div class="ftcard${f.id==='mediteran'?' active':''}" id="ft-${f.id}" onclick="selFT('${f.id}')"><div class="ftcard-icon">${f.icon}</div><div class="ftcard-lbl">${f.lbl}</div><div class="ftcard-desc">${f.desc.split(',')[0]}</div></div>`
+  ).join('');
   const ia=document.getElementById('ai-intent');
   if(ia) ia.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();aiAnalyzeIntent();}});
-  // Init mode
-  setMode('std');
-  pgr();plist();lu();
+  setMode('std');pgr();plist();lu();
 }
-
 function mkSw(cid,arr,activeId,fn){
   document.getElementById(cid).innerHTML=arr.map(x=>
     `<div class="sw-item"><div class="sw${x.id===activeId?' active':''}" id="sw${cid}${x.id}" style="background:${x.hex};${x.id===activeId?'border-color:var(--accent)':''}" onclick="${fn}('${x.id}')" title="${x.lbl}"></div><div class="sw-lbl">${x.lbl}</div></div>`
@@ -32,16 +123,7 @@ function mkSw(cid,arr,activeId,fn){
 }
 
 // ─── SELECTIONS ────────────────────────────────────────────
-function selPurpose(id){ST.purpose=id;document.querySelectorAll('.pcard').forEach(x=>x.classList.remove('active'));document.getElementById('pu-'+id)?.classList.add('active');checkBtn();lu();}
-function selNiche(id){ST.niche=id;document.querySelectorAll('.ncard').forEach(x=>x.classList.remove('active'));document.getElementById('ni-'+id)?.classList.add('active');applyPreset(id);checkBtn();lu();}
 function selPlacement(id){ST.placement=id;document.querySelectorAll('.plcard').forEach(x=>x.classList.remove('active'));document.getElementById('pl-'+id)?.classList.add('active');lu();}
-function checkBtn(){document.getElementById('btn-p0').style.display=(ST.niche&&ST.purpose)?'block':'none';}
-function applyPreset(nid){
-  const p=NPRESET[nid];if(!p) return;
-  ['c-l01','c-l02','c-l03','c-l05','c-l06','c-l08','c-l09','c-l10','c-expr','c-angle','c-body','c-ostyle'].forEach((g,i)=>{
-    setCI(g,[p.l01,p.l02,p.l03,p.l05,p.l06,p.l08,p.l09,p.l10,p.expr,p.angle,p.bodyIdx,p.ostyle][i]);
-  });
-}
 function selH(id){ST.hair=id;updSw('sw-hair',id);lu();}
 function selE(id){ST.eye=id;updSw('sw-eyes',id);lu();}
 function selS(id){ST.skin=id;updSw('sw-skin',id);lu();}
@@ -63,24 +145,16 @@ function lu(){
   const s=SKIN_COLORS.find(x=>x.id===ST.skin);
   const f=FACE_TYPES.find(x=>x.id===ST.face);
   const ni=NICHES.find(x=>x.id===ST.niche);
-  const pu=PURPOSES.find(x=>x.id===ST.purpose);
   const ime=gv('ime')||'—',st=gv('starost'),pk=gv('poklic');
   document.getElementById('sum-name').textContent=ime;
   document.getElementById('sum-role').textContent=(st?st+' let':'')+(pk?', '+pk:'')+(ni?' · '+ni.name:'');
-  let badges='';
-  if(ni) badges+=`<span class="nbadge">${ni.icon} ${ni.name}</span>`;
-  if(pu) badges+=`<span class="pbadge">${pu.name}</span>`;
-  document.getElementById('sum-badges').innerHTML=badges;
+  if(ni) document.getElementById('sum-badges').innerHTML=`<span class="nbadge">${ni.icon} ${ni.name}</span>`;
   sv('sv-face',f?f.lbl+' — '+f.desc.split(',')[0]:'—');
   sv('sv-hair',(h?.lbl||'—')+' · '+getAL('c-hlen'));
-  sv('sv-eyes',e?.lbl||'—');
-  sv('sv-skin',s?.lbl||'—');
-  sv('sv-fdet',getAL('c-fdet'));
-  sv('sv-expr',getAL('c-expr'));
-  sv('sv-l06',getAL('c-l06'));
-  sv('sv-l03',getAL('c-l03'));
-  sv('sv-l08',getAL('c-l08'));
-  sv('sv-l10',getAL('c-l10'));
+  sv('sv-eyes',e?.lbl||'—');sv('sv-skin',s?.lbl||'—');
+  sv('sv-fdet',getAL('c-fdet'));sv('sv-expr',getAL('c-expr'));
+  sv('sv-l06',getAL('c-l06'));sv('sv-l03',getAL('c-l03'));
+  sv('sv-l08',getAL('c-l08'));sv('sv-l10',getAL('c-l10'));
   const pn=gv('prod-name'),pp=PLACEMENTS.find(x=>x.id===ST.placement);
   if(PROD_IMG||pn){
     document.getElementById('prod-sum').classList.add('vis');
@@ -128,15 +202,19 @@ LAYER 05: ${gc('c-l05')||'85mm lens, shallow depth of field, soft bokeh'}
 
 LAYER 06: ${gc('c-l06')||'soft natural window light, warm golden tones'}
 
-LAYER 07: ${gc('c-l07')||'clean minimal atmosphere'}
+LAYER 07: ${gc('c-l07')||'clean minimal atmosphere, no distracting particles'}
 
 LAYER 08: ${gc('c-l08')||'clean natural grading, true-to-life colors'}
 
-LAYER 09: ${gc('c-l09')||'natural skin, healthy glow, minor imperfections'}
+LAYER 09: ${gc('c-l09')||'natural skin, healthy glow, visible pores, minor imperfections, no retouching'}
 
-LAYER 10: ${gc('c-l10')||'focused, present and purposeful'}`;
+LAYER 10: ${gc('c-l10')||'focused, present and purposeful'}
+
+LAYER 11: subtle micro-expressions, natural facial muscle tension, authentic emotional depth
+LAYER 12: hands relaxed and natural, exactly two hands if visible, anatomically correct fingers
+LAYER 13: environmental lighting consistency, shadows match light source direction`;
 }
-const NEG="perfect skin, plastic skin, airbrushed, studio lighting, symmetrical, 3D render, CGI, cartoon, doll-like, professional model pose, beauty filter, too sharp, overly lit, wet hair, greasy hair";
+const NEG="perfect skin, plastic skin, airbrushed, symmetrical, 3D render, CGI, cartoon, doll-like, professional model pose, beauty filter, too sharp, overly lit, wet hair, greasy hair, extra limbs, three hands, deformed fingers, missing fingers";
 
 // ─── SHOTS ─────────────────────────────────────────────────
 const SHOTS={
@@ -146,23 +224,22 @@ const SHOTS={
     {id:'p-profil',lbl:'Profil',pose:'close portrait, pure side profile, gaze into distance.'},
   ],
   fullbody:[
-    {id:'fb-front',lbl:'Spredaj',pose:'full body head to toe, facing camera, weight on one leg.'},
-    {id:'fb-34',lbl:'3/4 kot',pose:'full body, 3/4 angle, head slightly toward camera, one hand mid-gesture.'},
+    {id:'fb-front',lbl:'Spredaj',pose:'full body head to toe, facing camera, weight on one leg, hands relaxed at sides.'},
+    {id:'fb-34',lbl:'3/4 kot',pose:'full body, 3/4 angle, head slightly toward camera, one hand mid-gesture, other hand relaxed.'},
     {id:'fb-back',lbl:'Zadaj',pose:'full body from behind, back to camera, head slightly turned.'},
   ]
 };
-
 function getNicheLib(){
   const nid=ST.niche||'beauty';
   return {
-    outfit:(NOUTFITS[nid]||NOUTFITS.beauty).map(x=>({id:x.id,lbl:x.lbl,pose:'full body, standing naturally, slightly off camera.',sc:null,ou:x.ou,withProd:false})),
+    outfit:(NOUTFITS[nid]||NOUTFITS.beauty).map(x=>({id:x.id,lbl:x.lbl,pose:'full body, standing naturally, slightly off camera, hands relaxed.',sc:null,ou:x.ou,withProd:false})),
     scene:(NSCENES[nid]||NSCENES.beauty).map(x=>({id:x.id,lbl:x.lbl,pose:x.pose,sc:x.sc,ou:null,withProd:false})),
     video:(NVIDEOS[nid]||NVIDEOS.beauty),
     product:[
-      {id:'pr-hero',lbl:'Hero shot',pose:'full body or half body, product clearly in focus, confident natural presentation.',withProd:true,sc:null,ou:null},
+      {id:'pr-hero',lbl:'Hero shot',pose:'full body or half body, product clearly in focus, confident natural presentation, one hand holding product naturally.',withProd:true,sc:null,ou:null},
       {id:'pr-life',lbl:'Lifestyle',pose:'candid lifestyle moment, naturally using or holding product, not looking at camera.',withProd:true,sc:null,ou:null},
       {id:'pr-close',lbl:'Close-up',pose:'close portrait, product partially in frame near face or hands, natural and intimate.',withProd:true,sc:null,ou:null},
-      {id:'pr-story',lbl:'Story / vertical',pose:'vertical framing, full body or half body, product visible, social media story.',withProd:true,sc:null,ou:null},
+      {id:'pr-story',lbl:'Story / vertical',pose:'vertical framing, full body or half body, product visible, designed for social media story.',withProd:true,sc:null,ou:null},
     ]
   };
 }
@@ -183,8 +260,7 @@ function plist(){
 }
 function goTo(n){
   document.getElementById('phase-'+CUR).classList.remove('active');
-  CUR=n;
-  document.getElementById('phase-'+n).classList.add('active');
+  CUR=n;document.getElementById('phase-'+n).classList.add('active');
   pgr();plist();lu();
   if(n===3){rdrShots();genMain();}
   if(n===5) rdrLib();
@@ -209,4 +285,3 @@ function genMain(){
   document.getElementById('pt-main').textContent=buildPrompt(s.pose);
   document.getElementById('nt-main').textContent=NEG+(SHOT_TYPE==='fullbody'?', cropped body, portrait only':'');
 }
-

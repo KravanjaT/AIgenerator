@@ -202,3 +202,24 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .ref-img{width:50px;height:67px;object-fit:cover;border-radius:5px;border:1px solid var(--border2)}
 .spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--blue-light);border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── WIZARD ─────────────────────────────────────────────── */
+.q-block{margin-bottom:1.25rem}
+.q-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(200,184,154,0.15);border:1px solid var(--accent2);color:var(--accent);font-size:11px;font-weight:500;font-family:'DM Mono',monospace;margin-bottom:6px}
+.q-label{font-size:13px;color:var(--text);margin-bottom:8px;font-weight:400}
+.q-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text)}
+.q-input:focus{outline:none;border-color:var(--accent2)}
+.q-input::placeholder{color:var(--text3)}
+.qchip-group{display:flex;flex-wrap:wrap;gap:6px}
+.qchip{font-size:12px;padding:6px 13px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.qchip:hover{border-color:var(--accent2);color:var(--text)}
+.qchip.active{background:rgba(200,184,154,0.12);border-color:var(--accent);color:var(--accent);font-weight:500}
+.btn-wizard{width:100%;padding:11px;font-size:13px;font-weight:500;cursor:pointer;background:var(--accent2);border:none;border-radius:9px;color:var(--bg);font-family:'DM Sans',sans-serif;transition:all 0.2s;margin-top:0.5rem}
+.btn-wizard:hover:not(:disabled){background:var(--accent)}
+.btn-wizard:disabled{opacity:0.35;cursor:not-allowed}
+.wizard-result{background:rgba(74,124,89,0.08);border:1px solid var(--green);border-radius:10px;padding:12px;margin-top:0.875rem;display:none}
+.wizard-result.vis{display:block}
+.wr-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)}
+.wr-row:last-child{border-bottom:none}
+.wr-key{font-size:11px;color:var(--text3)}
+.wr-val{font-size:11px;color:var(--text2);text-align:right}

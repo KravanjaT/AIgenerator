@@ -1123,6 +1123,7 @@ function initAll(){
   document.getElementById('ngrid').innerHTML=NICHES.map(n=>
     `<div class="ncard" id="ni-${n.id}" onclick="selNiche('${n.id}')"><div class="ncard-icon">${n.icon}</div><div class="ncard-name">${n.name}</div><div class="ncard-desc">${n.desc}</div></div>`
   ).join('');
+  document.getElementById('pl-grid').innerHTML=PLACEMENTS.map(p=>
     `<div class="plcard" id="pl-${p.id}" onclick="selPlacement('${p.id}')"><div class="plcard-icon">${p.icon}</div><div class="plcard-name">${p.name}</div></div>`
   ).join('');
   mkSw('sw-hair',HAIR_COLORS,'lbrown','selH');

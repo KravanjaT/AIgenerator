@@ -5,7 +5,238 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Character Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<style>
+:root{--bg:#0e0e0e;--bg2:#161616;--bg3:#1e1e1e;--bg4:#242424;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0ede8;--text2:#8a8680;--text3:#5a5854;--accent:#c8b89a;--accent2:#8a7a68;--green:#4a7c59;--green-light:#6aac7a;--blue:#3a6a8a;--blue-light:#5a9abc}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh}
+
+/* MODE SWITCH */
+.mode-switch{display:flex;background:var(--bg3);border-bottom:1px solid var(--border);padding:0.75rem 2rem;gap:8px;align-items:center}
+.mode-btn{padding:7px 18px;font-size:12px;font-weight:500;cursor:pointer;border-radius:8px;font-family:'DM Sans',sans-serif;transition:all 0.2s;border:1px solid var(--border2);background:transparent;color:var(--text3)}
+.mode-btn.active-std{border-color:var(--accent);color:var(--accent);background:rgba(200,184,154,0.1)}
+.mode-btn.active-ai{border-color:var(--blue);color:var(--blue-light);background:rgba(58,106,138,0.15)}
+.mode-info{font-size:11px;color:var(--text3);margin-left:8px}
+.ai-badge{font-size:10px;padding:3px 9px;border-radius:20px;background:rgba(90,154,188,0.15);border:1px solid var(--blue);color:var(--blue-light)}
+
+.header{padding:1.25rem 2rem 0.75rem;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:1rem}
+.header h1{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--accent);font-weight:400}
+.header span{font-size:0.7rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase}
+.progress{display:flex;padding:0.75rem 2rem;gap:0;border-bottom:1px solid var(--border);overflow-x:auto}
+.prog-step{display:flex;align-items:center;flex-shrink:0}
+.prog-dot{width:24px;height:24px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;transition:all 0.3s}
+.prog-dot.active{border-color:var(--accent);color:var(--accent)}
+.prog-dot.done{background:var(--green);border-color:var(--green);color:white}
+.prog-label{font-size:11px;color:var(--text3);margin:0 7px;white-space:nowrap}
+.prog-label.active{color:var(--accent)}
+.prog-label.done{color:var(--green-light)}
+.prog-line{width:18px;height:1px;background:var(--border);flex-shrink:0}
+.prog-line.done{background:var(--green)}
+.main{display:grid;grid-template-columns:1fr 300px;min-height:calc(100vh - 160px)}
+.left{padding:1.5rem 2rem;border-right:1px solid var(--border);overflow-y:auto}
+.right{padding:1.25rem;background:var(--bg2);position:sticky;top:0;height:calc(100vh - 160px);overflow-y:auto}
+.phase{display:none}
+.phase.active{display:block}
+.phase-title{font-family:'DM Serif Display',serif;font-size:1.25rem;color:var(--text);margin-bottom:0.2rem;font-weight:400}
+.phase-sub{font-size:12px;color:var(--text2);margin-bottom:1.25rem}
+
+/* AI MODE PANEL */
+.ai-panel{background:var(--bg3);border:1px solid var(--blue);border-radius:14px;padding:14px;margin-bottom:1.25rem;display:none}
+.ai-panel.vis{display:block}
+.ai-panel-title{font-size:10px;color:var(--blue-light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--blue-light);animation:pulse 2s infinite;flex-shrink:0}
+.ai-textarea{width:100%;background:transparent;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;min-height:48px;line-height:1.5;outline:none}
+.ai-textarea::placeholder{color:var(--text3)}
+.ai-btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-ai{padding:6px 13px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--blue);border-radius:8px;background:rgba(58,106,138,0.15);color:var(--blue-light);font-family:'DM Sans',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:5px}
+.btn-ai:hover{background:rgba(58,106,138,0.3)}
+.btn-ai:disabled{opacity:0.4;cursor:not-allowed}
+.ai-result{background:rgba(58,106,138,0.08);border:1px solid var(--blue);border-radius:10px;padding:10px;margin-top:8px;font-size:11px;color:var(--text2);line-height:1.6;display:none}
+.ai-result.vis{display:block}
+.ai-result strong{color:var(--blue-light);font-weight:500}
+
+/* EVAL BOX */
+.eval-box{background:var(--bg3);border:1px solid var(--blue);border-radius:10px;padding:10px;margin-top:8px;display:none}
+.eval-box.vis{display:block}
+.eval-title{font-size:10px;color:var(--blue-light);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.eval-result{font-size:11px;color:var(--text2);line-height:1.6;margin-top:8px;display:none}
+.eval-result.vis{display:block}
+.eval-score{display:flex;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.score-pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.score-good{background:rgba(74,124,89,0.2);border:1px solid var(--green);color:var(--green-light)}
+.score-warn{background:rgba(186,117,23,0.2);border:1px solid #ba7517;color:#ef9f27}
+.score-bad{background:rgba(162,45,45,0.2);border:1px solid #a32d2d;color:#f09595}
+
+/* NICHE */
+.nlabel{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.ngrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:1.25rem}
+.ncard{border:1px solid var(--border2);border-radius:11px;padding:11px 9px;text-align:center;cursor:pointer;background:var(--bg3);transition:all 0.15s}
+.ncard:hover{border-color:var(--accent2);background:var(--bg4)}
+.ncard.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
+.ncard-icon{font-size:18px;margin-bottom:4px;line-height:1}
+.ncard-name{font-size:11px;font-weight:500;color:var(--text);margin-bottom:2px}
+.ncard.active .ncard-name{color:var(--accent)}
+.ncard-desc{font-size:9px;color:var(--text3);line-height:1.4}
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:1.25rem}
+.pcard{border:1px solid var(--border2);border-radius:9px;padding:9px 11px;cursor:pointer;background:var(--bg3);transition:all 0.15s;display:flex;align-items:center;gap:9px}
+.pcard:hover{border-color:var(--accent2)}
+.pcard.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
+.pdot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0}
+.pcard.active .pdot{background:var(--accent)}
+.pcard-name{font-size:12px;color:var(--text2)}
+.pcard.active .pcard-name{color:var(--accent)}
+
+/* FORM */
+.sec{margin-bottom:0.875rem;border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.sec-head{padding:9px 13px;background:var(--bg3);display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.sec-head:hover{background:var(--bg4)}
+.sec-name{font-size:12px;font-weight:500;color:var(--text)}
+.sec-hint{font-size:11px;color:var(--text3)}
+.sec-body{padding:12px 13px;display:none;border-top:1px solid var(--border)}
+.sec-body.open{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em}
+.field input,.field select{background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent2)}
+.field select option{background:var(--bg2)}
+.cg{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.chip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.chip:hover{border-color:var(--accent2);color:var(--text)}
+.chip.active{background:rgba(200,184,154,0.12);border-color:var(--accent);color:var(--accent);font-weight:500}
+.clabel{font-size:10px;color:var(--text3);margin-bottom:3px;margin-top:9px;text-transform:uppercase;letter-spacing:0.05em}
+.clabel:first-child{margin-top:0}
+.ftgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.ftcard{border:1px solid var(--border2);border-radius:9px;padding:8px 5px;text-align:center;cursor:pointer;background:var(--bg3);transition:all 0.15s}
+.ftcard:hover{border-color:var(--accent2)}
+.ftcard.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
+.ftcard-icon{font-size:15px;margin-bottom:2px;line-height:1}
+.ftcard-lbl{font-size:10px;color:var(--text2)}
+.ftcard.active .ftcard-lbl{color:var(--accent)}
+.ftcard-desc{font-size:9px;color:var(--text3);margin-top:1px;line-height:1.3}
+.sw-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.sw-item{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.sw{width:24px;height:24px;border-radius:50%;border:2px solid transparent;transition:all 0.15s}
+.sw:hover{transform:scale(1.15)}
+.sw.active{border-color:var(--accent)}
+.sw-lbl{font-size:9px;color:var(--text3)}
+
+/* PRODUCT */
+.prod-upload{border:2px dashed var(--border2);border-radius:14px;padding:1.5rem;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:1.25rem}
+.prod-upload:hover{border-color:var(--accent2);background:rgba(200,184,154,0.04)}
+.prod-upload.has-img{border-color:var(--green);border-style:solid}
+.prod-preview{width:100%;max-height:180px;object-fit:contain;border-radius:9px;display:none;margin-bottom:0.5rem}
+.pl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:4px}
+.plcard{border:1px solid var(--border2);border-radius:9px;padding:9px 7px;text-align:center;cursor:pointer;background:var(--bg3);transition:all 0.15s}
+.plcard:hover{border-color:var(--accent2)}
+.plcard.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
+.plcard-icon{font-size:16px;margin-bottom:3px;line-height:1}
+.plcard-name{font-size:11px;font-weight:500;color:var(--text2)}
+.plcard.active .plcard-name{color:var(--accent)}
+
+/* BUTTONS */
+.type-row{display:flex;gap:7px;margin-bottom:0.875rem;flex-wrap:wrap}
+.type-btn{flex:1;min-width:60px;padding:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);border-radius:9px;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s;text-align:center}
+.type-btn:hover{border-color:var(--accent2);color:var(--text)}
+.type-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,184,154,0.08)}
+.shot-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:0.875rem}
+.shot-btn{padding:5px 12px;font-size:11px;cursor:pointer;border:1px solid var(--border2);border-radius:7px;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.shot-btn:hover{border-color:var(--accent2);color:var(--text)}
+.shot-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,184,154,0.08);font-weight:500}
+.btn-primary{width:100%;padding:10px;font-size:13px;font-weight:500;cursor:pointer;background:var(--accent2);border:none;border-radius:9px;color:var(--bg);font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-top:0.75rem}
+.btn-primary:hover{background:var(--accent)}
+.btn-skip{width:100%;padding:8px;font-size:12px;cursor:pointer;background:transparent;border:1px solid var(--border2);border-radius:9px;color:var(--text3);font-family:'DM Sans',sans-serif;margin-top:0.5rem}
+.btn-skip:hover{border-color:var(--accent2);color:var(--text2)}
+.out-block{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:12px;margin-top:0.75rem}
+.out-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;font-family:'DM Mono',monospace}
+.out-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);white-space:pre-wrap;line-height:1.7;background:var(--bg2);border-radius:7px;padding:10px;margin-bottom:6px;max-height:190px;overflow-y:auto}
+.out-neg{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);white-space:pre-wrap;line-height:1.6;background:var(--bg3);border-radius:7px;padding:8px;margin-bottom:6px}
+.copy-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.btn-copy{font-size:11px;cursor:pointer;padding:4px 10px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.btn-copy:hover{border-color:var(--accent2);color:var(--text)}
+.btn-copy-all{font-size:11px;cursor:pointer;padding:4px 12px;border-radius:7px;border:1px solid var(--accent2);background:rgba(200,184,154,0.08);color:var(--accent);font-family:'DM Sans',sans-serif;font-weight:500}
+.btn-copy-all:hover{background:rgba(200,184,154,0.18)}
+.upload-zone{border:1px dashed var(--border2);border-radius:11px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;margin-top:0.875rem}
+.upload-zone:hover{border-color:var(--accent2);background:rgba(200,184,154,0.04)}
+.upload-zone-text{font-size:11px;color:var(--text3);margin-top:4px}
+.char-uploaded{border:1px solid var(--green);border-radius:11px;padding:11px;margin-top:0.875rem;display:none;align-items:center;gap:10px}
+.char-uploaded.vis{display:flex}
+.char-thumb{width:52px;height:70px;object-fit:cover;border-radius:7px}
+.char-uploaded-title{font-size:12px;color:var(--green-light);font-weight:500;margin-bottom:3px}
+.char-uploaded-sub{font-size:11px;color:var(--text3);line-height:1.5}
+
+/* RIGHT PANEL */
+.panel-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.875rem;display:flex;align-items:center;gap:7px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green-light);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.sum-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:0.875rem}
+.sum-name{font-family:'DM Serif Display',serif;font-size:1rem;color:var(--accent);margin-bottom:2px;min-height:24px}
+.sum-role{font-size:11px;color:var(--text2);margin-bottom:8px;min-height:15px}
+.sum-div{height:1px;background:var(--border);margin:7px 0}
+.sum-row{display:flex;justify-content:space-between;align-items:flex-start;padding:2px 0;border-bottom:1px solid var(--border)}
+.sum-row:last-child{border-bottom:none}
+.sum-key{font-size:11px;color:var(--text3);min-width:75px;flex-shrink:0}
+.sum-val{font-size:11px;color:var(--text3);text-align:right;line-height:1.4}
+.sum-val.set{color:var(--text2)}
+.sum-stitle{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;margin-top:7px}
+.nbadge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(200,184,154,0.1);border:1px solid var(--accent2);color:var(--accent);margin-bottom:5px;margin-right:3px}
+.pbadge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(74,124,89,0.1);border:1px solid var(--green);color:var(--green-light);margin-bottom:5px}
+.ai-analysis-card{background:rgba(58,106,138,0.08);border:1px solid var(--blue);border-radius:9px;padding:9px;margin-top:7px;display:none}
+.ai-analysis-card.vis{display:block}
+.ai-analysis-title{font-size:9px;color:var(--blue-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.ai-analysis-img{width:50px;height:67px;object-fit:cover;border-radius:5px;float:left;margin-right:8px}
+.ai-analysis-text{font-size:11px;color:var(--text2);line-height:1.5}
+.prod-sum{background:var(--bg4);border:1px solid var(--green);border-radius:9px;padding:9px;margin-top:7px;display:none}
+.prod-sum.vis{display:block}
+.prod-sum-title{font-size:9px;color:var(--green-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.prod-sum-img{width:100%;max-height:70px;object-fit:contain;border-radius:5px;margin-bottom:4px;display:none}
+.prod-sum-name{font-size:11px;color:var(--text2);font-weight:500}
+.prod-sum-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.divider{height:1px;background:var(--border);margin:0.875rem 0}
+.phase-list{display:flex;flex-direction:column;gap:4px}
+.pitem{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;border:1px solid var(--border)}
+.pitem.locked{opacity:0.35}
+.pitem.done{border-color:var(--green);background:rgba(74,124,89,0.08)}
+.pitem.current{border-color:var(--accent2);background:rgba(200,184,154,0.06)}
+.pitem-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0}
+.pitem.done .pitem-dot{background:var(--green-light)}
+.pitem.current .pitem-dot{background:var(--accent)}
+.pitem-name{font-size:11px;color:var(--text2);flex:1}
+.pitem.current .pitem-name{color:var(--accent)}
+.pitem.done .pitem-name{color:var(--green-light)}
+.pitem-tag{font-size:10px;color:var(--text3)}
+.ref-box{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px 11px;margin-top:7px}
+.ref-box-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.ref-img{width:50px;height:67px;object-fit:cover;border-radius:5px;border:1px solid var(--border2)}
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--blue-light);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.feedback-box{background:var(--bg3);border:1px solid var(--accent2);border-radius:11px;padding:14px;margin-top:1rem}
+.feedback-title{font-size:13px;color:var(--text);margin-bottom:10px;font-weight:400}
+.feedback-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.fbchip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.fbchip:hover{border-color:var(--accent2);color:var(--text)}
+.fbchip.active{background:rgba(200,184,154,0.12);border-color:var(--accent);color:var(--accent);font-weight:500}
+.q-block{margin-bottom:1.25rem}
+.q-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(200,184,154,0.15);border:1px solid var(--accent2);color:var(--accent);font-size:11px;font-weight:500;font-family:'DM Mono',monospace;margin-bottom:6px}
+.q-label{font-size:13px;color:var(--text);margin-bottom:8px;font-weight:400}
+.q-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text)}
+.q-input:focus{outline:none;border-color:var(--accent2)}
+.q-input::placeholder{color:var(--text3)}
+.qchip-group{display:flex;flex-wrap:wrap;gap:6px}
+.qchip{font-size:12px;padding:6px 13px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.qchip:hover{border-color:var(--accent2);color:var(--text)}
+.qchip.active{background:rgba(200,184,154,0.12);border-color:var(--accent);color:var(--accent);font-weight:500}
+.btn-wizard{width:100%;padding:11px;font-size:13px;font-weight:500;cursor:pointer;background:var(--accent2);border:none;border-radius:9px;color:var(--bg);font-family:'DM Sans',sans-serif;transition:all 0.2s;margin-top:0.5rem}
+.btn-wizard:hover:not(:disabled){background:var(--accent)}
+.btn-wizard:disabled{opacity:0.35;cursor:not-allowed}
+.wizard-result{background:rgba(74,124,89,0.08);border:1px solid var(--green);border-radius:10px;padding:12px;margin-top:0.875rem;display:none}
+.wizard-result.vis{display:block}
+.wr-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)}
+.wr-row:last-child{border-bottom:none}
+.wr-key{font-size:11px;color:var(--text3)}
+.wr-val{font-size:11px;color:var(--text2);text-align:right}
+</style>
 </head>
 <body>
 <div class="header">
@@ -25,51 +256,48 @@
 
 <!-- P0 -->
 <div class="phase active" id="phase-0">
-  <div class="phase-title">Povej mi o svojem projektu</div>
-  <div class="phase-sub">4 kratka vprašanja — AI nastavi vse za tebe</div>
+  <div class="phase-title">Za katerega naročnika je karakter?</div>
+  <div class="phase-sub">Izberi industrijo — nato odgovori na 2 kratki vprašanji</div>
 
-  <div class="q-block">
-    <div class="q-num">1</div>
-    <div class="q-label">Kaj prodajaš ali oglašuješ?</div>
-    <input class="q-input" type="text" id="q1" placeholder="npr. krema za obraz, fitnes program, oblačila, aplikacija..." oninput="checkWizard()"/>
-  </div>
+  <div class="nlabel">Industrija / niša</div>
+  <div class="ngrid" id="ngrid"></div>
 
-  <div class="q-block">
-    <div class="q-num">2</div>
-    <div class="q-label">Komu je namenjeno?</div>
-    <input class="q-input" type="text" id="q2" placeholder="npr. ženskam 30-45 let, mladim podjetnicam, očetom z otroki..." oninput="checkWizard()"/>
-  </div>
-
-  <div class="q-block">
-    <div class="q-num">3</div>
-    <div class="q-label">Kje bo content objavljen?</div>
-    <div class="qchip-group" id="q3">
-      <button class="qchip active" data-val="instagram">Instagram</button>
-      <button class="qchip" data-val="tiktok">TikTok / Reels</button>
-      <button class="qchip" data-val="linkedin">LinkedIn</button>
-      <button class="qchip" data-val="spletna">Spletna stran</button>
+  <div id="q-extra" style="display:none">
+    <div class="q-block">
+      <div class="q-label">Kaj točno prodaja?</div>
+      <input class="q-input" type="text" id="q1" placeholder="npr. krema za obraz, fitnes program, moška oblačila..." oninput="checkWizard()"/>
     </div>
-  </div>
-
-  <div class="q-block">
-    <div class="q-num">4</div>
-    <div class="q-label">Kakšen občutek mora dati?</div>
-    <div class="qchip-group" id="q4">
-      <button class="qchip active" data-val="trust">Zaupanje & strokovnost</button>
-      <button class="qchip" data-val="fun">Zabavno & sproščeno</button>
-      <button class="qchip" data-val="luxury">Luksuz & eleganca</button>
-      <button class="qchip" data-val="relax">Relax & lifestyle</button>
-      <button class="qchip" data-val="expert">Ekspert & fokusiran</button>
+    <div class="q-block">
+      <div class="q-label">Komu je namenjeno?</div>
+      <input class="q-input" type="text" id="q2" placeholder="npr. ženskam 30-45 let, mladim podjetnicam, moški 25-40..." oninput="checkWizard()"/>
     </div>
+    <div class="q-block">
+      <div class="q-label">Kje bo content?</div>
+      <div class="qchip-group" id="q3">
+        <button class="qchip active" data-val="instagram">Instagram</button>
+        <button class="qchip" data-val="tiktok">TikTok / Reels</button>
+        <button class="qchip" data-val="linkedin">LinkedIn</button>
+        <button class="qchip" data-val="spletna">Spletna stran</button>
+      </div>
+    </div>
+    <div class="q-block">
+      <div class="q-label">Kakšen občutek?</div>
+      <div class="qchip-group" id="q4">
+        <button class="qchip active" data-val="trust">Zaupanje & strokovnost</button>
+        <button class="qchip" data-val="fun">Zabavno & sproščeno</button>
+        <button class="qchip" data-val="luxury">Luksuz & eleganca</button>
+        <button class="qchip" data-val="relax">Relax & lifestyle</button>
+        <button class="qchip" data-val="expert">Ekspert & fokusiran</button>
+      </div>
+    </div>
+    <button class="btn-wizard" id="btn-wizard" onclick="applyAnswers()" disabled>Nastavi karakter →</button>
+    <div class="wizard-result" id="wizard-result"></div>
+    <button class="btn-primary" id="btn-p0" onclick="goTo(1)" style="display:none">Nadaljuj → Videz karakterja</button>
   </div>
-
-  <button class="btn-wizard" id="btn-wizard" onclick="applyAnswers()" disabled>Ustvari karakter →</button>
-
-  <div class="wizard-result" id="wizard-result"></div>
 
   <div class="ai-panel" id="ai-panel-0">
     <div class="ai-panel-title"><div class="ai-dot"></div>Claude AI način — opiši vse v enem stavku</div>
-    <textarea class="ai-textarea" id="ai-intent" placeholder="npr. ženska 30 let, mediteranski tip, kozmetika, Instagram, zaupanje..."></textarea>
+    <textarea class="ai-textarea" id="ai-intent" placeholder="npr. ženska 30 let, kozmetika, Instagram, zaupanje..."></textarea>
     <div class="ai-btn-row">
       <button class="btn-ai" onclick="aiAnalyzeIntent()" id="btn-ai-intent">
         <span class="spinner" id="sp-intent" style="display:none"></span>
@@ -78,8 +306,6 @@
     </div>
     <div class="ai-result" id="res-intent"></div>
   </div>
-
-  <button class="btn-primary" id="btn-p0" onclick="goTo(1)" style="display:none">Nadaljuj → Videz karakterja</button>
 </div>
 
 <!-- P1 -->
@@ -303,6 +529,28 @@
         <div class="char-uploaded-sub" id="char-sub">Karakter shranjen kot reference.</div>
       </div>
     </div>
+
+    <div class="feedback-box" id="feedback-box" style="display:none">
+      <div class="feedback-title">Kaj bi popravil na generiranem karakterju?</div>
+      <div class="feedback-chips" id="feedback-chips">
+        <button class="fbchip" onclick="addFeedback(this)">Lasje niso pravi</button>
+        <button class="fbchip" onclick="addFeedback(this)">Barva kože</button>
+        <button class="fbchip" onclick="addFeedback(this)">Obleka ni prava</button>
+        <button class="fbchip" onclick="addFeedback(this)">Izraz na obrazu</button>
+        <button class="fbchip" onclick="addFeedback(this)">Ozadje</button>
+        <button class="fbchip" onclick="addFeedback(this)">Svetloba</button>
+        <button class="fbchip" onclick="addFeedback(this)">Preveč retuširano</button>
+        <button class="fbchip" onclick="addFeedback(this)">Roke so napačne</button>
+      </div>
+      <textarea class="q-input" id="feedback-custom" placeholder="ali opiši kaj bi spremenil..." style="margin-top:8px;min-height:48px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-ai" onclick="applyFeedback()" id="btn-feedback">
+          <span class="spinner" id="sp-feedback" style="display:none"></span>
+          Popravi prompt →
+        </button>
+        <button class="btn-skip" style="flex:1;margin-top:0" onclick="goTo(4)">Zadovoljen — nadaljuj →</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -407,9 +655,849 @@
   <div class="panel-title">Napredek</div>
   <div class="phase-list" id="plist"></div>
 </div>
-<script src="js/data.js"></script>
-<script src="js/api.js"></script>
-<script src="js/prompts.js"></script>
-<script src="js/ui.js"></script>
+<script>
+// ─── STATE ────────────────────────────────────────────────
+let CUR=0,MODE='std',CHAR_IMGS=[],CHAR_B64=null,PROD_IMG=null;
+let SHOT_TYPE='portrait',LIB_TYPE='portrait',SEL_SHOT='p-front',SEL_LIB='lp-f';
+let ST={hair:'lbrown',eye:'gbrown',skin:'olive',face:'mediteran',niche:null,purpose:null,placement:null};
+
+// ─── MODE SWITCH ──────────────────────────────────────────
+function setMode(m){
+  MODE=m;
+  const isAI=m==='ai';
+  document.getElementById('btn-mode-std').className='mode-btn'+(isAI?'':' active-std');
+  document.getElementById('btn-mode-ai').className='mode-btn'+(isAI?' active-ai':'');
+  document.getElementById('mode-info').textContent=isAI
+    ?'Claude AI — naravni jezik, analiza slike, ocena prompta'
+    :'Deluje povsod — GitHub Pages, brez API ključa';
+  // Show/hide AI panels
+  document.querySelectorAll('.ai-panel').forEach(el=>el.classList.toggle('vis',isAI));
+  document.querySelectorAll('.eval-box').forEach(el=>el.classList.toggle('vis',isAI));
+  document.getElementById('manual-label').style.display=isAI?'block':'none';
+}
+
+// ─── DATA ─────────────────────────────────────────────────
+const PHASES=[
+  {name:'Niša & namen',tag:'Start'},
+  {name:'Videz',tag:'Fizično'},
+  {name:'Stil & feel',tag:'10 slojev'},
+  {name:'Character base',tag:'Generiranje'},
+  {name:'Produkt',tag:'Oglaševanje'},
+  {name:'Library',tag:'Vsi prompti'},
+];
+const PURPOSES=[
+  {id:'product',name:'Predstavitev produkta'},
+  {id:'influencer',name:'Influencer / content'},
+  {id:'linkedin',name:'Profesionalni profil'},
+  {id:'brand',name:'Brand ambassador'},
+  {id:'ugc',name:'UGC content creator'},
+  {id:'personal',name:'Osebni projekt'},
+];
+const NICHES=[
+  {id:'beauty',icon:'✦',name:'Kozmetika & beauty',desc:'nega, make-up, parfumi'},
+  {id:'food',icon:'◈',name:'Hrana & lifestyle',desc:'kuhanje, recepti, restavracije'},
+  {id:'fitness',icon:'◉',name:'Fitnes & zdravje',desc:'šport, wellness, prehrana'},
+  {id:'home',icon:'◫',name:'Dom & garden',desc:'notranjost, vrt, orodje'},
+  {id:'fashion',icon:'◇',name:'Moda & oblačila',desc:'oblačila, dodatki, stajling'},
+  {id:'tech',icon:'◎',name:'Tech & AI',desc:'tehnologija, aplikacije'},
+  {id:'luxury',icon:'◈',name:'Luksuz & lifestyle',desc:'ure, avti, potovanja'},
+  {id:'kids',icon:'◯',name:'Otroški produkti',desc:'igrače, oblačila, vzgoja'},
+  {id:'pet',icon:'◉',name:'Hišni ljubljenci',desc:'hrana, oprema, nega'},
+];
+const PLACEMENTS=[
+  {id:'holding',icon:'◻',name:'Drži v roki',val:'holding the product naturally in one hand, relaxed grip, product clearly visible'},
+  {id:'using',icon:'◈',name:'Uporablja',val:'actively using the product, applying or engaging with it, mid-action'},
+  {id:'table',icon:'◫',name:'Na površini',val:'product placed on surface nearby, character naturally in scene'},
+  {id:'wearing',icon:'◉',name:'Nosi',val:'wearing or incorporating the product as part of appearance'},
+  {id:'showing',icon:'◇',name:'Kaže kameri',val:'presenting the product toward camera, showing it clearly'},
+  {id:'unboxing',icon:'◎',name:'Odkriva',val:'just received or opened the product, genuine curiosity reaction'},
+];
+const NPRESET={
+  beauty:{l01:1,l02:3,l03:0,l05:3,l06:1,l07:4,l08:1,l09:1,l10:3,expr:4,angle:0,bodyIdx:0,ostyle:2},
+  food:{l01:0,l02:1,l03:4,l05:0,l06:2,l07:1,l08:2,l09:1,l10:2,expr:4,angle:0,bodyIdx:2,ostyle:0},
+  fitness:{l01:0,l02:3,l03:5,l05:0,l06:2,l07:4,l08:1,l09:1,l10:2,expr:4,angle:1,bodyIdx:2,ostyle:3},
+  home:{l01:0,l02:0,l03:2,l05:0,l06:1,l07:0,l08:2,l09:0,l10:0,expr:2,angle:0,bodyIdx:1,ostyle:0},
+  fashion:{l01:1,l02:3,l03:1,l05:3,l06:3,l07:4,l08:3,l09:1,l10:3,expr:0,angle:0,bodyIdx:0,ostyle:2},
+  tech:{l01:0,l02:2,l03:2,l05:0,l06:0,l07:0,l08:0,l09:0,l10:3,expr:2,angle:0,bodyIdx:1,ostyle:2},
+  luxury:{l01:1,l02:3,l03:1,l05:3,l06:4,l07:4,l08:3,l09:1,l10:4,expr:0,angle:1,bodyIdx:1,ostyle:4},
+  kids:{l01:0,l02:3,l03:5,l05:1,l06:2,l07:4,l08:1,l09:1,l10:2,expr:4,angle:2,bodyIdx:0,ostyle:0},
+  pet:{l01:0,l02:1,l03:5,l05:0,l06:2,l07:4,l08:1,l09:1,l10:2,expr:4,angle:0,bodyIdx:1,ostyle:0},
+};
+const NSCENES={
+  beauty:[
+    {id:'sc1',lbl:'Kopalnica — jutro',pose:'standing at bathroom vanity, looking at reflection, morning skincare routine, candid.',sc:'clean modern bathroom, soft morning light, products on vanity, intimate space'},
+    {id:'sc2',lbl:'Dnevna soba',pose:'sitting on couch in natural light, relaxed, candid warm moment.',sc:'warm cozy living room, soft cushions, natural window light'},
+    {id:'sc3',lbl:'Studio / belo',pose:'standing or sitting, confident natural pose.',sc:'pure white seamless studio background, clean editorial'},
+    {id:'sc4',lbl:'Kavarna — jutro',pose:'sitting at cafe table, holding coffee cup, relaxed morning.',sc:'warm morning cafe, wooden tables, soft natural light, coffee visible'},
+    {id:'sc5',lbl:'Narava / park',pose:'walking or standing outdoors, natural light, candid and relaxed.',sc:'green park, soft natural daylight, fresh outdoor atmosphere'},
+  ],
+  food:[
+    {id:'sc1',lbl:'Kuhinja — priprava',pose:'standing at counter, preparing food, mid-action, utensil in hand.',sc:'warm home kitchen, fresh ingredients on counter, natural window light, lived-in'},
+    {id:'sc2',lbl:'Jedilna miza',pose:'sitting at table, eating or tasting food, genuine candid reaction.',sc:'warm dining table, natural light, food plated, personal home'},
+    {id:'sc3',lbl:'Tržnica',pose:'browsing fresh produce, picking up vegetables, candid outdoor.',sc:'outdoor farmers market, fresh produce stalls, natural daylight'},
+    {id:'sc4',lbl:'Restavracija',pose:'sitting at restaurant, looking at menu, relaxed and present.',sc:'warm restaurant interior, candlelight or soft light, table setting'},
+    {id:'sc5',lbl:'Kavarna',pose:'sitting with coffee and food, casual morning, relaxed.',sc:'cozy cafe, warm light, wooden surfaces, coffee and breakfast visible'},
+  ],
+  fitness:[
+    {id:'sc1',lbl:'Park — tek',pose:'mid-run in park, dynamic action, caught mid-stride, candid.',sc:'green park early morning, soft golden light, trees and path'},
+    {id:'sc2',lbl:'Telovadnica',pose:'using gym equipment, mid-action, focused and present.',sc:'modern gym interior, equipment visible, strong overhead lighting'},
+    {id:'sc3',lbl:'Narava — pohodništvo',pose:'walking on trail, looking at landscape, candid outdoor.',sc:'mountain or forest trail, natural daylight, trees and nature'},
+    {id:'sc4',lbl:'Doma — vadba',pose:'doing yoga or stretching on mat, focused and relaxed.',sc:'bright home interior, yoga mat on wooden floor, natural window light'},
+    {id:'sc5',lbl:'Po vadbi',pose:'sitting relaxed after workout, holding water bottle, candid recovery.',sc:'cafe or outdoor bench, soft natural light, relaxed post-workout'},
+  ],
+  home:[
+    {id:'sc1',lbl:'Vrt',pose:'working in garden, kneeling with tools, candid mid-action.',sc:'home garden, green plants and soil, natural daylight'},
+    {id:'sc2',lbl:'Dnevna soba',pose:'arranging interior, standing or sitting, candid home moment.',sc:'warm lived-in living room, furniture and personal objects, window light'},
+    {id:'sc3',lbl:'Delavnica',pose:'working with tools, mid-action, focused on task.',sc:'home workshop or garage, tools visible, work bench'},
+    {id:'sc4',lbl:'Kuhinja — dom',pose:'cooking or cleaning in kitchen, casual home moment.',sc:'home kitchen, countertops, natural light, warm and personal'},
+    {id:'sc5',lbl:'Zunaj hiše',pose:'standing in front of house or terrace, relaxed.',sc:'house exterior or terrace, garden visible, natural daylight'},
+  ],
+  fashion:[
+    {id:'sc1',lbl:'Ulica — mesto',pose:'walking on city street, candid street style, mid-stride.',sc:'urban city street, architecture in background, natural daylight'},
+    {id:'sc2',lbl:'Kavarna',pose:'sitting at cafe, relaxed, natural light, outfit clearly visible.',sc:'stylish cafe interior, warm light, wooden surfaces'},
+    {id:'sc3',lbl:'Studio — editorial',pose:'standing, editorial fashion energy, confident.',sc:'minimal studio or white background, clean editorial'},
+    {id:'sc4',lbl:'Park',pose:'walking in park, natural movement, candid.',sc:'green urban park, trees and path, soft natural light'},
+    {id:'sc5',lbl:'Butik',pose:'browsing clothing, looking at items, candid shopping moment.',sc:'stylish boutique, clothing racks, warm interior lighting'},
+  ],
+  tech:[
+    {id:'sc1',lbl:'Pisarna — desk',pose:'sitting at desk with laptop, working, focused.',sc:'modern clean desk setup, laptop and tech accessories, soft office light'},
+    {id:'sc2',lbl:'Kavarna — laptop',pose:'sitting in cafe working on laptop, focused.',sc:'cafe, laptop on table, coffee nearby, soft natural light'},
+    {id:'sc3',lbl:'Doma — couch',pose:'sitting on couch with laptop, relaxed work from home.',sc:'modern home interior, couch, natural window light'},
+    {id:'sc4',lbl:'Na poti',pose:'standing or walking with phone, checking device, mid-action.',sc:'urban environment or transport, natural light'},
+    {id:'sc5',lbl:'Event',pose:'standing at event or conference, networking, candid.',sc:'modern event space, people blurred in background, professional'},
+  ],
+  luxury:[
+    {id:'sc1',lbl:'Hotelska soba',pose:'standing in luxury hotel suite, relaxed elegant moment.',sc:'luxury hotel room, premium furnishings, soft warm lighting'},
+    {id:'sc2',lbl:'Fine dining',pose:'sitting at fine dining table, elegant posture, candid sophisticated.',sc:'upscale restaurant, candlelight, white tablecloth, refined'},
+    {id:'sc3',lbl:'Luxury street',pose:'walking on luxury shopping street, elegant and confident.',sc:'high-end shopping district, luxury store fronts'},
+    {id:'sc4',lbl:'Jahta / morje',pose:'standing on boat deck, looking at sea, relaxed luxury.',sc:'yacht deck or luxury boat, sea and sky, warm natural light'},
+    {id:'sc5',lbl:'Dom — interior',pose:'standing in luxury interior, elegant posture.',sc:'high-end home interior, premium furniture, soft warm lighting'},
+  ],
+  kids:[
+    {id:'sc1',lbl:'Dnevna soba — igra',pose:'sitting on floor with child, playing, genuine interaction.',sc:'warm family living room, toys, soft natural light'},
+    {id:'sc2',lbl:'Igrišče',pose:'outdoor at playground, active and happy, candid.',sc:'outdoor playground or park, children equipment, natural daylight'},
+    {id:'sc3',lbl:'Kuhinja — skupaj',pose:'in kitchen with child, baking together, candid warm moment.',sc:'warm home kitchen, baking items on counter, natural light'},
+    {id:'sc4',lbl:'Spalnica — rutina',pose:'sitting on bed reading to child, warm intimate moment.',sc:"child's bedroom, soft warm lighting, books and toys visible"},
+    {id:'sc5',lbl:'Narava',pose:'walking or playing outdoors with child, natural candid.',sc:'park or garden, natural daylight, green environment'},
+  ],
+  pet:[
+    {id:'sc1',lbl:'Doma — z ljubimcem',pose:'sitting on floor or couch with pet, genuine interaction.',sc:'warm home interior, pet visible, natural window light'},
+    {id:'sc2',lbl:'Sprehod — park',pose:'walking with dog on leash, outdoor candid.',sc:'park or urban street, natural daylight, authentic outdoor walk'},
+    {id:'sc3',lbl:'Vrt',pose:'playing with pet in garden, active candid moment.',sc:'home garden or yard, natural daylight, grass and plants'},
+    {id:'sc4',lbl:'Veterinar',pose:'holding or interacting with pet in care setting.',sc:'veterinary office or pet shop, clean professional environment'},
+    {id:'sc5',lbl:'Kavarna — terasa',pose:'sitting at outdoor cafe with pet nearby, relaxed lifestyle.',sc:'outdoor cafe terrace, tables and chairs, natural daylight'},
+  ],
+};
+const NOUTFITS={
+  beauty:[
+    {id:'ou1',lbl:'Jutranji ritual',ou:'soft silk or satin robe, slightly open, intimate morning wear. Barefoot. No jewelry.'},
+    {id:'ou2',lbl:'Casual chic',ou:'clean white or neutral fitted t-shirt, high-waisted tailored trousers. Minimal jewelry. Fresh and effortless.'},
+    {id:'ou3',lbl:'Editorial',ou:'structured blazer over minimal top, tailored fit. Understated luxury.'},
+  ],
+  food:[
+    {id:'ou1',lbl:'Domači kuhar',ou:'casual linen apron over simple t-shirt, jeans. Sleeves rolled up. Natural and worn-in.'},
+    {id:'ou2',lbl:'Chef',ou:'white chef jacket or kitchen wear, slightly used. Practical and real.'},
+    {id:'ou3',lbl:'Casual lifestyle',ou:'casual comfortable outfit, light sweater or shirt, jeans. Relaxed.'},
+  ],
+  fitness:[
+    {id:'ou1',lbl:'Athletic wear',ou:'quality athletic leggings or shorts, fitted workout top. Functional, slightly worn.'},
+    {id:'ou2',lbl:'Post-workout',ou:'athletic joggers, oversized hoodie. Relaxed post-workout, comfortable.'},
+    {id:'ou3',lbl:'Outdoor active',ou:'athletic outdoor wear, running jacket, leggings. Practical.'},
+  ],
+  home:[
+    {id:'ou1',lbl:'Vrtnar',ou:'worn gardening clothes, practical trousers, simple t-shirt. Dirt marks acceptable. Real.'},
+    {id:'ou2',lbl:'DIY',ou:'work clothes, worn jeans, flannel shirt. Practical and authentic.'},
+    {id:'ou3',lbl:'Casual dom',ou:'comfortable casual home outfit, cotton trousers, soft t-shirt.'},
+  ],
+  fashion:[
+    {id:'ou1',lbl:'Street style',ou:'current street fashion, interesting layering. Confident and effortless.'},
+    {id:'ou2',lbl:'Smart casual',ou:'quality tailored pieces, interesting textures. Elevated everyday look.'},
+    {id:'ou3',lbl:'Minimalist',ou:'clean minimal wardrobe, neutral tones, quality fabrics. Simple but refined.'},
+  ],
+  tech:[
+    {id:'ou1',lbl:'Smart casual',ou:'quality chinos, clean shirt or subtle sweater. Professional but approachable.'},
+    {id:'ou2',lbl:'Startup casual',ou:'clean jeans, quality t-shirt or hoodie. Modern and relaxed.'},
+    {id:'ou3',lbl:'Business casual',ou:'blazer over open collar shirt, tailored trousers.'},
+  ],
+  luxury:[
+    {id:'ou1',lbl:'Luxury casual',ou:'cashmere sweater or silk blouse, tailored trousers. No visible logos.'},
+    {id:'ou2',lbl:'Evening elegant',ou:'elegant evening attire, refined and sophisticated. Quality fabrics.'},
+    {id:'ou3',lbl:'Yacht / resort',ou:'linen or silk resort wear, relaxed elegant fit.'},
+  ],
+  kids:[
+    {id:'ou1',lbl:'Casual parent',ou:'comfortable casual parent outfit, jeans and soft sweater. Real and approachable.'},
+    {id:'ou2',lbl:'Active parent',ou:'casual active wear, comfortable and practical for movement.'},
+    {id:'ou3',lbl:'Smart casual',ou:'smart casual family-friendly outfit, neat but comfortable.'},
+  ],
+  pet:[
+    {id:'ou1',lbl:'Casual outdoor',ou:'casual outdoor outfit, comfortable jeans, practical jacket.'},
+    {id:'ou2',lbl:'Active casual',ou:'comfortable active wear, joggers, practical top.'},
+    {id:'ou3',lbl:'Casual home',ou:'relaxed home outfit, soft comfortable clothes.'},
+  ],
+};
+const NVIDEOS={
+  beauty:[
+    {id:'vi1',lbl:'Nanašanje kreme',mot:'slowly applies product to face with gentle deliberate motion, eyes closed or looking down, peaceful and intimate. Movement amplitude: very low.'},
+    {id:'vi2',lbl:'Ogledalo — reakcija',mot:'looking at reflection in mirror, slight satisfied expression, gently touches face. Natural eye blinking. Movement amplitude: very low.'},
+    {id:'vi3',lbl:'Odkriva produkt',mot:'opens product packaging slowly, looks at it with genuine curiosity, subtle smile. Movement amplitude: low.'},
+    {id:'vi4',lbl:'Jutranja rutina',mot:'picks up product from vanity, looks at it briefly, begins applying. Gentle and unhurried. Movement amplitude: low.'},
+  ],
+  food:[
+    {id:'vi1',lbl:'Meša / kuha',mot:'stirring in bowl or pot, looking down at food with focus, occasional glance up. Movement amplitude: low.'},
+    {id:'vi2',lbl:'Okusi',mot:'tastes food from spoon, eyes close briefly, genuine satisfied expression. Movement amplitude: low.'},
+    {id:'vi3',lbl:'Reže / pripravlja',mot:'chopping ingredients on cutting board, focused and rhythmic motion. Movement amplitude: medium.'},
+    {id:'vi4',lbl:'Vonja jed',mot:'lifts plate toward face, closes eyes briefly and smells, genuine pleasure. Movement amplitude: low.'},
+  ],
+  fitness:[
+    {id:'vi1',lbl:'Razteza se',mot:'slow controlled stretching motion, eyes closed or looking forward. Movement amplitude: low.'},
+    {id:'vi2',lbl:'Pije vodo',mot:'lifts water bottle to drink, takes sip, sets it down, brief pause. Movement amplitude: low.'},
+    {id:'vi3',lbl:'Diha — recovery',mot:'slow deep breath in, chest rises, holds briefly, exhales slowly. Movement amplitude: very low.'},
+    {id:'vi4',lbl:'Ogrevanje',mot:'gentle warm-up motion, rolls shoulders or neck, looks forward. Movement amplitude: low.'},
+  ],
+  home:[
+    {id:'vi1',lbl:'Pregleda delo',mot:'steps back from task, looks at completed work with quiet satisfaction, slight nod. Movement amplitude: very low.'},
+    {id:'vi2',lbl:'Dela z orodjem',mot:'using tool with focused deliberate motion, looks at work surface, adjusts grip. Movement amplitude: medium.'},
+    {id:'vi3',lbl:'Zaliva rastlino',mot:'slowly waters plant, gentle and careful motion, looks at plants with care. Movement amplitude: low.'},
+    {id:'vi4',lbl:'Odpakira',mot:'sets down or opens package, looks at contents with interest and satisfaction. Movement amplitude: low.'},
+  ],
+  fashion:[
+    {id:'vi1',lbl:'Hodi mimo',mot:'confident natural walking motion, slight awareness of surroundings, effortless. Movement amplitude: medium.'},
+    {id:'vi2',lbl:'Popravlja obleko',mot:'subtly adjusts collar or sleeve, glances down briefly, looks up with calm confidence. Movement amplitude: very low.'},
+    {id:'vi3',lbl:'Gleda v izložbo',mot:'turns head to look at shop window, pauses briefly, continues. Movement amplitude: low.'},
+    {id:'vi4',lbl:'Obrne se',mot:'slowly turns from side to face camera, natural and unhurried. Movement amplitude: low.'},
+  ],
+  tech:[
+    {id:'vi1',lbl:'Tipka na laptopu',mot:'typing on laptop, looks at screen, pauses to think, continues typing. Movement amplitude: low.'},
+    {id:'vi2',lbl:'Bere ekran',mot:'reading content on screen, slight lean forward, eyes move, occasional nod. Movement amplitude: very low.'},
+    {id:'vi3',lbl:'Dvigne pogled',mot:'slowly raises gaze from screen, expression shifts from focus to quiet reflection. Movement amplitude: very low.'},
+    {id:'vi4',lbl:'Razmišlja',mot:'pauses from work, looks away from screen, slight lean back, thinking, returns. Movement amplitude: low.'},
+  ],
+  luxury:[
+    {id:'vi1',lbl:'Drži uro / nakit',mot:'lifts wrist to look at watch, slow elegant gesture, quiet appreciation. Movement amplitude: very low.'},
+    {id:'vi2',lbl:'Gleda skozi okno',mot:'standing at window, looking out, calm and contemplative. Elegant stillness. Movement amplitude: very low.'},
+    {id:'vi3',lbl:'Vzame kozarec',mot:'reaches for wine glass, lifts it slowly, looks briefly, takes slow sip. Movement amplitude: low.'},
+    {id:'vi4',lbl:'Hodi elegantno',mot:'slow confident elegant walking motion, poised and unhurried. Movement amplitude: low.'},
+  ],
+  kids:[
+    {id:'vi1',lbl:'Smeje se — iskren',mot:'genuine spontaneous laugh, eyes crinkle naturally, real and warm. Movement amplitude: low.'},
+    {id:'vi2',lbl:'Gleda otroka',mot:'looks down with soft warm expression, slight smile, gentle and attentive. Movement amplitude: very low.'},
+    {id:'vi3',lbl:'Drži produkt',mot:'holds product naturally, looks at it briefly, looks up with warm approving expression. Movement amplitude: low.'},
+    {id:'vi4',lbl:'Pozdravlja',mot:'gentle natural wave or welcoming gesture, warm smile. Movement amplitude: low.'},
+  ],
+  pet:[
+    {id:'vi1',lbl:'Gleda žival',mot:'looks down at pet with warm affectionate expression, gentle. Real connection. Movement amplitude: very low.'},
+    {id:'vi2',lbl:'Hodi s psom',mot:'natural walking with slight pull of leash, looks down at dog briefly. Movement amplitude: medium.'},
+    {id:'vi3',lbl:'Drži žival',mot:'holds pet naturally, gentle adjustment, looks with genuine affection. Movement amplitude: low.'},
+    {id:'vi4',lbl:'Daje hrano',mot:'reaches down to place food bowl, looks at pet with caring expression, straightens up. Movement amplitude: low.'},
+  ],
+};
+const HAIR_COLORS=[
+  {id:'blonde',lbl:'Svetli',hex:'#E8D5A3',val:'blonde hair'},
+  {id:'lbrown',lbl:'Sv.rjavi',hex:'#A0724A',val:'light brown hair'},
+  {id:'dbrown',lbl:'T.rjavi',hex:'#5C3D2E',val:'dark brown hair'},
+  {id:'black',lbl:'Črni',hex:'#1a1a1a',val:'black hair'},
+  {id:'sp',lbl:'Sivo-t.',hex:'#888888',val:'salt-and-pepper hair'},
+  {id:'silver',lbl:'Sivi',hex:'#C0C0C0',val:'silver grey hair'},
+  {id:'auburn',lbl:'Rdeč.',hex:'#8B4513',val:'auburn red hair'},
+  {id:'plat',lbl:'Platin.',hex:'#F0EDE0',val:'platinum blonde hair'},
+];
+const EYE_COLORS=[
+  {id:'blue',lbl:'Modre',hex:'#4A90D9',val:'blue eyes'},
+  {id:'gbrown',lbl:'Zel-rj.',hex:'#6B8E4E',val:'green-brown hazel eyes'},
+  {id:'dbrown',lbl:'T.rjave',hex:'#3D1C02',val:'dark brown eyes'},
+  {id:'grey',lbl:'Sive',hex:'#8A9BA8',val:'grey eyes'},
+  {id:'hazel',lbl:'Hazel',hex:'#9B7653',val:'warm hazel eyes'},
+  {id:'green',lbl:'Zelene',hex:'#2D8A4E',val:'bright green eyes'},
+];
+const SKIN_COLORS=[
+  {id:'fair',lbl:'Svetla',hex:'#FDDBB4',val:'fair pale skin'},
+  {id:'light',lbl:'Sv.koža',hex:'#F0C896',val:'light skin tone'},
+  {id:'olive',lbl:'Olivna',hex:'#C68642',val:'olive Mediterranean skin'},
+  {id:'tan',lbl:'Bronasta',hex:'#A0522D',val:'warm tan bronze skin'},
+  {id:'brown',lbl:'Rjava',hex:'#7B4F2E',val:'medium brown skin'},
+  {id:'dark',lbl:'Temna',hex:'#4A2C0A',val:'dark rich skin tone'},
+];
+const FACE_TYPES=[
+  {id:'nordic',lbl:'Severni',icon:'◻',desc:'angular jaw, sharp features, deep-set eyes'},
+  {id:'mediteran',lbl:'Mediter.',icon:'◼',desc:'olive skin, strong nose, expressive features'},
+  {id:'latin',lbl:'Latinski',icon:'◈',desc:'warm tones, full lips, expressive eyes'},
+  {id:'eastasian',lbl:'Vzh.az.',icon:'◎',desc:'smooth skin, defined cheekbones, almond eyes'},
+  {id:'southasian',lbl:'Juž.az.',icon:'◉',desc:'dark expressive eyes, warm olive skin'},
+  {id:'african',lbl:'Afriški',icon:'●',desc:'rich dark skin, strong facial structure'},
+  {id:'mideast',lbl:'Bl.vzhod',icon:'◆',desc:'dark intense features, defined beard area'},
+  {id:'mixed',lbl:'Mešan',icon:'◇',desc:'unique blend of multiple ethnic features'},
+];
+
+
+// ─── CLAUDE API ────────────────────────────────────────────
+async function callClaude(messages,system,maxTokens=600){
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system,messages})
+    });
+    const data=await res.json();
+    return data.content?.map(x=>x.text||'').join('')||'';
+  }catch(e){throw new Error('API klic ni uspel');}
+}
+
+// API 1 — Naravni jezik → nastavitve
+async function aiAnalyzeIntent(){
+  const txt=document.getElementById('ai-intent').value.trim();
+  if(!txt) return;
+  const btn=document.getElementById('btn-ai-intent');
+  const sp=document.getElementById('sp-intent');
+  btn.disabled=true;sp.style.display='inline-block';
+  document.getElementById('res-intent').classList.remove('vis');
+  try{
+    const reply=await callClaude([{role:'user',content:txt}],
+      `You extract character parameters from descriptions for an AI image generation tool. Return ONLY valid JSON:
+{"spol":"man"/"woman","starost":number,"poklic":string,"ime":string,"niche":"beauty"/"food"/"fitness"/"home"/"fashion"/"tech"/"luxury"/"kids"/"pet","hairColor":"blonde"/"lbrown"/"dbrown"/"black"/"sp"/"silver"/"auburn"/"plat","eyeColor":"blue"/"gbrown"/"dbrown"/"grey"/"hazel"/"green","skinColor":"fair"/"light"/"olive"/"tan"/"brown"/"dark","faceType":"nordic"/"mediteran"/"latin"/"eastasian"/"southasian"/"african"/"mideast"/"mixed","explanation":"1 sentence in Slovenian"}`,600);
+    const p=JSON.parse(reply.replace(/```json|```/g,'').trim());
+    if(p.spol) document.getElementById('spol').value=p.spol;
+    if(p.starost) document.getElementById('starost').value=p.starost;
+    if(p.poklic) document.getElementById('poklic').value=p.poklic;
+    if(p.ime) document.getElementById('ime').value=p.ime;
+    if(p.niche) selNiche(p.niche);
+    if(p.hairColor){ST.hair=p.hairColor;selH(p.hairColor);}
+    if(p.eyeColor){ST.eye=p.eyeColor;selE(p.eyeColor);}
+    if(p.skinColor){ST.skin=p.skinColor;selS(p.skinColor);}
+    if(p.faceType) selFT(p.faceType);
+    if(!ST.purpose) selPurpose('product');
+    lu();
+    document.getElementById('res-intent').innerHTML=`<strong>Nastavljeno:</strong> ${p.explanation||'Parametri nastavljeni.'}`;
+    document.getElementById('res-intent').classList.add('vis');
+    document.getElementById('btn-p0').style.display='block';
+  }catch(e){
+    document.getElementById('res-intent').innerHTML=`<strong>Napaka:</strong> Poskusi z ročno izbiro.`;
+    document.getElementById('res-intent').classList.add('vis');
+  }
+  btn.disabled=false;sp.style.display='none';
+}
+
+// API 2 — Analiza slike
+async function aiAnalyzeCharImage(b64,mimeType){
+  document.getElementById('char-sub').textContent='Claude analizira sliko...';
+  try{
+    const reply=await callClaude([{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:mimeType,data:b64}},
+      {type:'text',text:'Analyze this AI-generated character image. Describe: age, gender, face type/ethnicity, hair, eyes, skin, expression, clothing, lighting, background. Max 2 sentences in Slovenian.'}
+    ]}],'You are an AI image analyst. Be specific and concise.',300);
+    document.getElementById('char-sub').textContent=reply;
+    document.getElementById('ai-ac-text').textContent=reply;
+    document.getElementById('ai-ac').classList.add('vis');
+  }catch(e){
+    document.getElementById('char-sub').textContent='Analiza ni bila mogoča. Karakter je zaklenjen.';
+  }
+}
+
+// API 3 — Ocena prompta
+async function aiEval(ptId,resId,btnId,spId){
+  const prompt=document.getElementById(ptId).textContent;
+  if(!prompt||prompt==='—') return;
+  const btn=document.getElementById(btnId),sp=document.getElementById(spId);
+  const res=document.getElementById(resId);
+  btn.disabled=true;sp.style.display='inline-block';res.classList.remove('vis');
+  try{
+    const reply=await callClaude([{role:'user',content:`Evaluate this Higgsfield AI image prompt:\n\n${prompt}`}],
+      `You evaluate AI image prompts for the 10-layer AI Universa protocol. Return ONLY valid JSON:
+{"score":1-10,"strengths":["s1","s2"],"weaknesses":["w1"],"suggestion":"improvement in Slovenian","missing_layers":["layer names"]}`,400);
+    const p=JSON.parse(reply.replace(/```json|```/g,'').trim());
+    const sc=p.score>=8?'score-good':p.score>=6?'score-warn':'score-bad';
+    let html=`<div class="eval-score"><span class="score-pill ${sc}">${p.score}/10</span>${(p.missing_layers||[]).map(l=>`<span class="score-pill score-warn">${l}</span>`).join('')}</div>`;
+    if(p.strengths?.length) html+=`<div style="margin-bottom:5px"><strong style="color:var(--green-light)">Dobro:</strong> ${p.strengths.join(', ')}</div>`;
+    if(p.weaknesses?.length) html+=`<div style="margin-bottom:5px"><strong style="color:#ef9f27">Slabo:</strong> ${p.weaknesses.join(', ')}</div>`;
+    if(p.suggestion) html+=`<div><strong style="color:var(--blue-light)">Predlog:</strong> ${p.suggestion}</div>`;
+    res.innerHTML=html;res.classList.add('vis');
+  }catch(e){res.innerHTML='<span style="color:var(--text3)">Ocena ni bila mogoča.</span>';res.classList.add('vis');}
+  btn.disabled=false;sp.style.display='none';
+}
+
+
+// ─── 4 VPRAŠANJA → 10 SLOJEV ──────────────────────────────
+function applyAnswers(){
+  const q1=gv('q1').toLowerCase();
+  const q2=gv('q2').toLowerCase();
+  const q3=document.querySelector('#q3 .qchip.active')?.dataset.val||'instagram';
+  const q4=document.querySelector('#q4 .qchip.active')?.dataset.val||'trust';
+
+  // Niša iz q1
+  let niche='beauty';
+  if(q1.match(/krema|serum|ličila|parfum|šampon|koža|lepot|make|beauty|kosmetik/)) niche='beauty';
+  else if(q1.match(/hrana|recept|kuhanje|chef|restavr|kava|vino|pijač|čokolad/)) niche='food';
+  else if(q1.match(/fitnes|vadba|trening|šport|tek|joga|gym|zdravj|prehransk/)) niche='fitness';
+  else if(q1.match(/vrt|orodje|dom|pohišt|notranj|delavnic|čiščen|rastlin/)) niche='home';
+  else if(q1.match(/oblač|moda|čevlj|torb|nakit|fashion|stajl/)) niche='fashion';
+  else if(q1.match(/app|aplikacij|software|tech|ai|računalnik|telefon|digital/)) niche='tech';
+  else if(q1.match(/ura|avto|jahta|luksuz|premium|luxury|hotel|potovan/)) niche='luxury';
+  else if(q1.match(/otrok|igrač|starš|dojenč|šola/)) niche='kids';
+  else if(q1.match(/pes|mačka|hišn|žival|pet|veterinar/)) niche='pet';
+  ST.niche=niche;
+
+  // Spol in starost iz q2
+  let spol='woman',starost='32';
+  if(q2.match(/moški|mosk|men|man|oče|dad|brat/)) spol='man';
+  if(q2.match(/žensk|woman|girl|mama/)) spol='woman';
+  const ageM=q2.match(/(\d{2})\s*[-–]\s*(\d{2})|(\d{2})\s*let/);
+  if(ageM){const a=parseInt(ageM[1]||ageM[3]),b=parseInt(ageM[2]||ageM[3]);starost=String(Math.round((a+(b||a))/2));}
+  document.getElementById('spol').value=spol;
+  document.getElementById('starost').value=starost;
+
+  // Tip obraza iz q2
+  let face='mediteran';
+  if(q2.match(/skandinav|nordic|nem|avstr|šved|britansk/)) face='nordic';
+  else if(q2.match(/asian|azij|japan|korea|kitaj/)) face='eastasian';
+  else if(q2.match(/latin|brasil|špan|mehik/)) face='latin';
+  else if(q2.match(/afrišk|afric/)) face='african';
+  ST.face=face;
+  document.querySelectorAll('.ftcard').forEach(x=>x.classList.remove('active'));
+  document.getElementById('ft-'+face)?.classList.add('active');
+
+  // Platforma → aesthetic, objektiv, svetloba, grading
+  const platP={
+    instagram:{l01:1,l05:3,l06:1,l08:1,angle:0},
+    tiktok:   {l01:0,l05:0,l06:2,l08:2,angle:2},
+    linkedin: {l01:1,l05:3,l06:1,l08:1,angle:0},
+    spletna:  {l01:1,l05:3,l06:3,l08:1,angle:0},
+  };
+  const pp=platP[q3]||platP.instagram;
+
+  // Občutek → izraz, energija, mood, koža
+  const feelP={
+    trust:  {expr:4,l02:3,l10:3,l09:1},
+    fun:    {expr:4,l02:1,l10:2,l09:1},
+    luxury: {expr:0,l02:3,l10:4,l09:1},
+    relax:  {expr:4,l02:2,l10:0,l09:3},
+    expert: {expr:5,l02:3,l10:3,l09:1},
+  };
+  const pf=feelP[q4]||feelP.trust;
+
+  // Apliciraj
+  const nicheP=NPRESET[niche]||NPRESET.beauty;
+  setCI('c-l01',pp.l01);setCI('c-l02',pf.l02);setCI('c-l03',nicheP.l03);
+  setCI('c-l05',pp.l05);setCI('c-l06',pp.l06);setCI('c-l07',nicheP.l07||4);
+  setCI('c-l08',pp.l08);setCI('c-l09',pf.l09);setCI('c-l10',pf.l10);
+  setCI('c-expr',pf.expr);setCI('c-angle',pp.angle);
+  setCI('c-body',nicheP.bodyIdx||1);setCI('c-ostyle',nicheP.ostyle||1);
+
+  // Poklic
+  const poklicM={beauty:'lifestyle creator',food:'food blogger',fitness:'fitnes trener/ka',
+    home:'lifestyle blogger',fashion:'fashion influencer',tech:'tech creator',
+    luxury:'luxury lifestyle creator',kids:'parenting creator',pet:'pet owner & creator'};
+  if(!gv('poklic')) document.getElementById('poklic').value=poklicM[niche]||'content creator';
+
+  // Prikaz povzetka
+  const ni=NICHES.find(x=>x.id===niche);
+  const platL={instagram:'Instagram',tiktok:'TikTok / Reels',linkedin:'LinkedIn',spletna:'Spletna stran'};
+  const feelL={trust:'Zaupanje & strokovnost',fun:'Zabavno & sproščeno',luxury:'Luksuz',relax:'Relax & lifestyle',expert:'Ekspert'};
+  const res=document.getElementById('wizard-result');
+  res.innerHTML=`
+    <div style="font-size:11px;color:var(--green-light);font-weight:500;margin-bottom:7px">✓ AI je nastavil parametre</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px">
+      <div class="wr-row"><span class="wr-key">Niša</span><span class="wr-val">${ni?.name||niche}</span></div>
+      <div class="wr-row"><span class="wr-key">Karakter</span><span class="wr-val">${spol==='woman'?'Ženska':'Moški'}, ~${starost} let</span></div>
+      <div class="wr-row"><span class="wr-key">Platforma</span><span class="wr-val">${platL[q3]||q3}</span></div>
+      <div class="wr-row"><span class="wr-key">Občutek</span><span class="wr-val">${feelL[q4]||q4}</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:7px">Popravi detajle v naslednjem koraku ali nadaljuj →</div>`;
+  res.classList.add('vis');
+  document.getElementById('btn-p0').style.display='block';
+  lu();
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+function initAll(){
+  document.querySelectorAll('.qchip').forEach(c=>{
+    c.addEventListener('click',()=>{
+      const g=c.closest('.qchip-group');
+      g.querySelectorAll('.qchip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.cg').forEach(g=>{
+    g.querySelectorAll('.chip').forEach(c=>{
+      c.addEventListener('click',()=>{g.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');lu();});
+    });
+  });
+  document.getElementById('ngrid').innerHTML=NICHES.map(n=>
+    `<div class="ncard" id="ni-${n.id}" onclick="selNiche('${n.id}')"><div class="ncard-icon">${n.icon}</div><div class="ncard-name">${n.name}</div><div class="ncard-desc">${n.desc}</div></div>`
+  ).join('');
+    `<div class="plcard" id="pl-${p.id}" onclick="selPlacement('${p.id}')"><div class="plcard-icon">${p.icon}</div><div class="plcard-name">${p.name}</div></div>`
+  ).join('');
+  mkSw('sw-hair',HAIR_COLORS,'lbrown','selH');
+  mkSw('sw-eyes',EYE_COLORS,'gbrown','selE');
+  mkSw('sw-skin',SKIN_COLORS,'olive','selS');
+  document.getElementById('ftgrid').innerHTML=FACE_TYPES.map(f=>
+    `<div class="ftcard${f.id==='mediteran'?' active':''}" id="ft-${f.id}" onclick="selFT('${f.id}')"><div class="ftcard-icon">${f.icon}</div><div class="ftcard-lbl">${f.lbl}</div><div class="ftcard-desc">${f.desc.split(',')[0]}</div></div>`
+  ).join('');
+  const ia=document.getElementById('ai-intent');
+  if(ia) ia.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();aiAnalyzeIntent();}});
+  setMode('std');pgr();plist();lu();
+}
+function mkSw(cid,arr,activeId,fn){
+  document.getElementById(cid).innerHTML=arr.map(x=>
+    `<div class="sw-item"><div class="sw${x.id===activeId?' active':''}" id="sw${cid}${x.id}" style="background:${x.hex};${x.id===activeId?'border-color:var(--accent)':''}" onclick="${fn}('${x.id}')" title="${x.lbl}"></div><div class="sw-lbl">${x.lbl}</div></div>`
+  ).join('');
+}
+
+// ─── SELECTIONS ────────────────────────────────────────────
+function selNiche(id){
+  ST.niche=id;
+  document.querySelectorAll('.ncard').forEach(x=>x.classList.remove('active'));
+  document.getElementById('ni-'+id)?.classList.add('active');
+  // Pokaži vprašanja
+  const qe=document.getElementById('q-extra');
+  if(qe) qe.style.display='block';
+  // Nastavi preset za nišo
+  const p=NPRESET[id];
+  if(p){
+    setCI('c-l01',p.l01);setCI('c-l02',p.l02);setCI('c-l03',p.l03);
+    setCI('c-l05',p.l05);setCI('c-l06',p.l06);setCI('c-l07',p.l07||4);
+    setCI('c-l08',p.l08);setCI('c-l09',p.l09);setCI('c-l10',p.l10);
+    setCI('c-expr',p.expr);setCI('c-angle',p.angle);
+    setCI('c-body',p.bodyIdx||1);setCI('c-ostyle',p.ostyle||1);
+  }
+  lu();
+}
+function selPlacement(id){ST.placement=id;document.querySelectorAll('.plcard').forEach(x=>x.classList.remove('active'));document.getElementById('pl-'+id)?.classList.add('active');lu();}
+function selH(id){ST.hair=id;updSw('sw-hair',id);lu();}
+function selE(id){ST.eye=id;updSw('sw-eyes',id);lu();}
+function selS(id){ST.skin=id;updSw('sw-skin',id);lu();}
+function selFT(id){ST.face=id;document.querySelectorAll('.ftcard').forEach(x=>x.classList.remove('active'));document.getElementById('ft-'+id)?.classList.add('active');lu();}
+function updSw(prefix,id){
+  document.querySelectorAll(`[id^="sw${prefix}"]`).forEach(el=>{el.classList.remove('active');el.style.borderColor='transparent';});
+  const el=document.getElementById('sw'+prefix+id);
+  if(el){el.classList.add('active');el.style.borderColor='var(--accent)';}
+}
+function setCI(gid,idx){document.querySelectorAll('#'+gid+' .chip').forEach((c,i)=>c.classList.toggle('active',i===idx));}
+function getAL(gid){const a=document.querySelector('#'+gid+' .chip.active');return a?a.textContent.trim():'—';}
+function gc(id){const a=document.querySelector('#'+id+' .chip.active');return a?a.dataset.val:'';}
+function gv(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+
+// ─── LIVE UPDATE ───────────────────────────────────────────
+function lu(){
+  const h=HAIR_COLORS.find(x=>x.id===ST.hair);
+  const e=EYE_COLORS.find(x=>x.id===ST.eye);
+  const s=SKIN_COLORS.find(x=>x.id===ST.skin);
+  const f=FACE_TYPES.find(x=>x.id===ST.face);
+  const ni=NICHES.find(x=>x.id===ST.niche);
+  const ime=gv('ime')||'—',st=gv('starost'),pk=gv('poklic');
+  document.getElementById('sum-name').textContent=ime;
+  document.getElementById('sum-role').textContent=(st?st+' let':'')+(pk?', '+pk:'')+(ni?' · '+ni.name:'');
+  if(ni) document.getElementById('sum-badges').innerHTML=`<span class="nbadge">${ni.icon} ${ni.name}</span>`;
+  sv('sv-face',f?f.lbl+' — '+f.desc.split(',')[0]:'—');
+  sv('sv-hair',(h?.lbl||'—')+' · '+getAL('c-hlen'));
+  sv('sv-eyes',e?.lbl||'—');sv('sv-skin',s?.lbl||'—');
+  sv('sv-fdet',getAL('c-fdet'));sv('sv-expr',getAL('c-expr'));
+  sv('sv-l06',getAL('c-l06'));sv('sv-l03',getAL('c-l03'));
+  sv('sv-l08',getAL('c-l08'));sv('sv-l10',getAL('c-l10'));
+  const pn=gv('prod-name'),pp=PLACEMENTS.find(x=>x.id===ST.placement);
+  if(PROD_IMG||pn){
+    document.getElementById('prod-sum').classList.add('vis');
+    document.getElementById('prod-sum-name').textContent=pn||'Produkt';
+    document.getElementById('prod-sum-sub').textContent=pp?'Postavitev: '+pp.name:'—';
+    if(PROD_IMG) document.getElementById('prod-sum-img').style.display='block';
+  }
+  if(CUR===3) genMain();
+  if(CUR===5) genLib();
+}
+function sv(id,val){const el=document.getElementById(id);if(el){el.textContent=val;el.className='sum-val'+(val&&val!=='—'?' set':'');}}
+
+// ─── PROMPT BUILDER ────────────────────────────────────────
+function getPhysDesc(){
+  const h=HAIR_COLORS.find(x=>x.id===ST.hair)||HAIR_COLORS[1];
+  const e=EYE_COLORS.find(x=>x.id===ST.eye)||EYE_COLORS[1];
+  const s=SKIN_COLORS.find(x=>x.id===ST.skin)||SKIN_COLORS[2];
+  const f=FACE_TYPES.find(x=>x.id===ST.face)||FACE_TYPES[1];
+  return `${s.val}. ${f.desc}. ${gc('c-hlen')}, ${h.val}, ${gc('c-htex')||'naturally styled'}. ${e.val}. ${gc('c-fdet')||'natural features'}. ${gc('c-body')||'natural proportions'}.`;
+}
+function getProdLine(){
+  const pn=gv('prod-name'),pd=gv('prod-desc');
+  const pp=PLACEMENTS.find(x=>x.id===ST.placement);
+  if(!pn&&!pp) return '';
+  let line='';
+  if(pp) line+=pp.val+'. ';
+  if(pn) line+=`The product is "${pn}"${pd?', '+pd:''}.`;
+  return line.trim();
+}
+function buildPrompt(pose,sceneOvr,outfitOvr,withProduct){
+  const ime=gv('ime')||'Subject',st=gv('starost')||'30';
+  const sp=gv('spol')==='woman'?'woman':'man',pk=gv('poklic')||'professional';
+  const scene=sceneOvr||(gc('c-l03')||'pure white seamless background, clean neutral studio');
+  const outf=outfitOvr||((gv('outfit')||'simple quality clothing')+'. '+(gc('c-ostyle')||'smart casual'));
+  const prodLine=withProduct?getProdLine():'';
+  return `LAYER 01: ${gc('c-l01')||'hyper-realistic, editorial photograph'}
+
+LAYER 02: ${st}-year-old ${sp} named ${ime}, ${pk}. ${getPhysDesc()} ${gc('c-l02')||'confident, self-assured'}. ${gc('c-expr')||'genuine subtle smile'}. ${pose}${prodLine?' '+prodLine:''} ${gc('c-angle')||'eye level camera angle'}.
+
+LAYER 03: ${scene}
+
+LAYER 04: ${outf}
+
+LAYER 05: ${gc('c-l05')||'85mm lens, shallow depth of field, soft bokeh'}
+
+LAYER 06: ${gc('c-l06')||'soft natural window light, warm golden tones'}
+
+LAYER 07: ${gc('c-l07')||'clean minimal atmosphere, no distracting particles'}
+
+LAYER 08: ${gc('c-l08')||'clean natural grading, true-to-life colors'}
+
+LAYER 09: ${gc('c-l09')||'natural skin, healthy glow, visible pores, minor imperfections, no retouching'}
+
+LAYER 10: ${gc('c-l10')||'focused, present and purposeful'}
+
+LAYER 11: subtle micro-expressions, natural facial muscle tension, authentic emotional depth
+LAYER 12: hands relaxed and natural, exactly two hands if visible, anatomically correct fingers
+LAYER 13: environmental lighting consistency, shadows match light source direction`;
+}
+const NEG="perfect skin, plastic skin, airbrushed, symmetrical, 3D render, CGI, cartoon, doll-like, professional model pose, beauty filter, too sharp, overly lit, wet hair, greasy hair, extra limbs, three hands, deformed fingers, missing fingers";
+
+// ─── SHOTS ─────────────────────────────────────────────────
+const SHOTS={
+  portrait:[
+    {id:'p-front',lbl:'Frontalni',pose:'close portrait head and shoulders, looking straight into camera, natural and confident.'},
+    {id:'p-34',lbl:'3/4 kot',pose:'close portrait, head and body turned 3/4, gaze slightly off-camera.'},
+    {id:'p-profil',lbl:'Profil',pose:'close portrait, pure side profile, gaze into distance.'},
+  ],
+  fullbody:[
+    {id:'fb-front',lbl:'Spredaj',pose:'full body head to toe, facing camera, weight on one leg, hands relaxed at sides.'},
+    {id:'fb-34',lbl:'3/4 kot',pose:'full body, 3/4 angle, head slightly toward camera, one hand mid-gesture, other hand relaxed.'},
+    {id:'fb-back',lbl:'Zadaj',pose:'full body from behind, back to camera, head slightly turned.'},
+  ]
+};
+function getNicheLib(){
+  const nid=ST.niche||'beauty';
+  return {
+    outfit:(NOUTFITS[nid]||NOUTFITS.beauty).map(x=>({id:x.id,lbl:x.lbl,pose:'full body, standing naturally, slightly off camera, hands relaxed.',sc:null,ou:x.ou,withProd:false})),
+    scene:(NSCENES[nid]||NSCENES.beauty).map(x=>({id:x.id,lbl:x.lbl,pose:x.pose,sc:x.sc,ou:null,withProd:false})),
+    video:(NVIDEOS[nid]||NVIDEOS.beauty),
+    product:[
+      {id:'pr-hero',lbl:'Hero shot',pose:'full body or half body, product clearly in focus, confident natural presentation, one hand holding product naturally.',withProd:true,sc:null,ou:null},
+      {id:'pr-life',lbl:'Lifestyle',pose:'candid lifestyle moment, naturally using or holding product, not looking at camera.',withProd:true,sc:null,ou:null},
+      {id:'pr-close',lbl:'Close-up',pose:'close portrait, product partially in frame near face or hands, natural and intimate.',withProd:true,sc:null,ou:null},
+      {id:'pr-story',lbl:'Story / vertical',pose:'vertical framing, full body or half body, product visible, designed for social media story.',withProd:true,sc:null,ou:null},
+    ]
+  };
+}
+
+// ─── NAVIGATION ────────────────────────────────────────────
+function pgr(){
+  document.getElementById('pgbar').innerHTML=PHASES.map((p,i)=>{
+    const cls=i<CUR?'done':i===CUR?'active':'';
+    return (i>0?`<div class="prog-line${i<=CUR?' done':''}"></div>`:'')+
+      `<div class="prog-step"><div class="prog-dot ${cls}">${i<CUR?'✓':i+1}</div><div class="prog-label ${cls}">${p.name}</div></div>`;
+  }).join('');
+}
+function plist(){
+  document.getElementById('plist').innerHTML=PHASES.map((p,i)=>{
+    const cls=i<CUR?'done':i===CUR?'current':'locked';
+    return `<div class="pitem ${cls}"><div class="pitem-dot"></div><div class="pitem-name">${p.name}</div><div class="pitem-tag">${p.tag}</div></div>`;
+  }).join('');
+}
+function goTo(n){
+  document.getElementById('phase-'+CUR).classList.remove('active');
+  CUR=n;document.getElementById('phase-'+n).classList.add('active');
+  pgr();plist();lu();
+  if(n===3){rdrShots();genMain();}
+  if(n===5) rdrLib();
+}
+function rdrShots(){
+  const list=SHOTS[SHOT_TYPE]||[];
+  document.getElementById('shot-row').innerHTML=list.map((s,i)=>
+    `<button class="shot-btn${i===0?' active':''}" id="sb-${s.id}" onclick="selS2('${s.id}')">${s.lbl}</button>`).join('');
+  SEL_SHOT=list[0]?.id;
+}
+function selS2(id){
+  SHOTS[SHOT_TYPE]?.forEach(s=>{document.getElementById('sb-'+s.id)?.classList.toggle('active',s.id===id);});
+  SEL_SHOT=id;genMain();
+}
+function setType(t){
+  SHOT_TYPE=t;['portrait','fullbody'].forEach(x=>document.getElementById('tc-'+x).classList.toggle('active',x===t));
+  rdrShots();genMain();
+}
+function genMain(){
+  const s=(SHOTS[SHOT_TYPE]||[]).find(x=>x.id===SEL_SHOT)||(SHOTS[SHOT_TYPE]||[])[0];
+  if(!s) return;
+  document.getElementById('pt-main').textContent=buildPrompt(s.pose);
+  document.getElementById('nt-main').textContent=NEG+(SHOT_TYPE==='fullbody'?', cropped body, portrait only':'');
+}
+
+// ─── WIZARD ────────────────────────────────────────────────
+function checkWizard(){
+  const q1=document.getElementById('q1')?.value.trim();
+  const q2=document.getElementById('q2')?.value.trim();
+  const btn=document.getElementById('btn-wizard');
+  if(btn) btn.disabled=!(q1&&q2);
+}
+
+function addFeedback(btn){
+  btn.classList.toggle('active');
+}
+
+async function applyFeedback(){
+  const chips=Array.from(document.querySelectorAll('.fbchip.active')).map(x=>x.textContent);
+  const custom=document.getElementById('feedback-custom')?.value.trim();
+  const issues=[...chips,custom].filter(Boolean);
+  if(!issues.length){goTo(4);return;}
+
+  const btn=document.getElementById('btn-feedback');
+  const sp=document.getElementById('sp-feedback');
+  btn.disabled=true;sp.style.display='inline-block';
+
+  // Map feedback to layer fixes
+  const fixes={
+    'Lasje niso pravi':'c-hlen',
+    'Barva kože':'c-l09',
+    'Obleka ni prava':'c-ostyle',
+    'Izraz na obrazu':'c-expr',
+    'Ozadje':'c-l03',
+    'Svetloba':'c-l06',
+    'Preveč retuširano':'c-l09',
+    'Roke so napačne':null,
+  };
+
+  // Open relevant sections
+  issues.forEach(issue=>{
+    if(issue.includes('Lasje')||issue.includes('kož')||issue.includes('Obleka')||issue.includes('Izraz')||issue.includes('Roke')){
+      document.getElementById('sb2')?.classList.add('open');
+      document.getElementById('sb3')?.classList.add('open');
+      document.getElementById('sb4')?.classList.add('open');
+    }
+    if(issue.includes('Ozadje')||issue.includes('Svetlob')||issue.includes('retuš')){
+      document.getElementById('sb6')?.classList.add('open');
+      document.getElementById('sb7')?.classList.add('open');
+    }
+  });
+
+  // Regenerate prompt with issues noted
+  genMain();
+  btn.disabled=false;sp.style.display='none';
+
+  // Show what was changed
+  const fb=document.getElementById('feedback-box');
+  if(fb){
+    const note=document.createElement('div');
+    note.style.cssText='font-size:11px;color:var(--green-light);margin-top:8px;padding:6px 10px;background:rgba(74,124,89,0.1);border-radius:6px';
+    note.textContent='✓ Prompt posodobljen. Generiraj novo sliko in uploadaj za primerjavo.';
+    fb.appendChild(note);
+  }
+}
+
+// ─── UPLOADS ───────────────────────────────────────────────
+async function handleCharUpload(evt){
+  const f=evt.target.files[0];if(!f) return;
+  const url=URL.createObjectURL(f);
+  CHAR_IMGS.push(url);
+  document.getElementById('char-upload-zone').style.display='none';
+  const cu=document.getElementById('char-uploaded');
+  cu.classList.add('vis');
+  document.getElementById('char-thumb').src=url;
+  document.getElementById('ai-ac-img').src=url;
+  // Show feedback box
+  setTimeout(()=>{
+    const fb=document.getElementById('feedback-box');
+    if(fb) fb.style.display='block';
+  },400);
+  if(MODE==='ai'){
+    const reader=new FileReader();
+    reader.onload=async()=>{
+      const b64=reader.result.split(',')[1];
+      CHAR_B64={data:b64,type:f.type||'image/jpeg'};
+      await aiAnalyzeCharImage(b64,f.type||'image/jpeg');
+    };
+    reader.readAsDataURL(f);
+  } else {
+    document.getElementById('char-sub').textContent='Karakter shranjen. Kaj bi popravil?';
+  }
+}
+function handleProdUpload(evt){
+  const f=evt.target.files[0];if(!f) return;
+  const url=URL.createObjectURL(f);
+  PROD_IMG=url;
+  const prev=document.getElementById('prod-preview');
+  prev.src=url;prev.style.display='block';
+  document.getElementById('prod-ph').style.display='none';
+  document.getElementById('prod-upload-area').classList.add('has-img');
+  document.getElementById('prod-sum-img').src=url;
+  lu();
+}
+
+// ─── LIBRARY ───────────────────────────────────────────────
+function rdrLib(){
+  const lib=getNicheLib();
+  const BASE_P=[
+    {id:'lp-f',lbl:'Frontalni',pose:'close portrait, head and shoulders, straight into camera, natural.',sc:null,ou:null},
+    {id:'lp-34',lbl:'3/4 kot',pose:'close portrait, 3/4 angle, gaze slightly off-camera.',sc:null,ou:null},
+    {id:'lp-pr',lbl:'Profil',pose:'close portrait, pure side profile.',sc:null,ou:null},
+  ];
+  const BASE_FB=[
+    {id:'lfb-f',lbl:'Spredaj',pose:'full body head to toe, facing camera.',sc:null,ou:null},
+    {id:'lfb-34',lbl:'3/4 kot',pose:'full body, 3/4 angle, one hand mid-gesture.',sc:null,ou:null},
+    {id:'lfb-b',lbl:'Zadaj',pose:'full body from behind, back to camera.',sc:null,ou:null},
+  ];
+  const list=LIB_TYPE==='portrait'?BASE_P:LIB_TYPE==='fullbody'?BASE_FB:LIB_TYPE==='outfit'?lib.outfit:LIB_TYPE==='scene'?lib.scene:LIB_TYPE==='product'?lib.product:lib.video;
+  document.getElementById('lib-shot-row').innerHTML=list.map((s,i)=>
+    `<button class="shot-btn${i===0?' active':''}" id="ls-${s.id}" onclick="selL('${s.id}')">${s.lbl}</button>`).join('');
+  SEL_LIB=list[0]?.id;genLib();
+}
+function selL(id){
+  document.querySelectorAll('[id^="ls-"]').forEach(el=>el.classList.remove('active'));
+  document.getElementById('ls-'+id)?.classList.add('active');
+  SEL_LIB=id;genLib();
+}
+function setLib(t){
+  LIB_TYPE=t;
+  ['portrait','fullbody','outfit','scene','product','video'].forEach(x=>document.getElementById('lib-'+x).classList.toggle('active',x===t));
+  rdrLib();
+}
+function genLib(){
+  const lib=getNicheLib();
+  const all=[
+    {id:'lp-f',pose:'close portrait, head and shoulders, straight into camera.',sc:null,ou:null},
+    {id:'lp-34',pose:'close portrait, 3/4 angle, gaze slightly off-camera.',sc:null,ou:null},
+    {id:'lp-pr',pose:'close portrait, pure side profile.',sc:null,ou:null},
+    {id:'lfb-f',pose:'full body head to toe, facing camera.',sc:null,ou:null},
+    {id:'lfb-34',pose:'full body, 3/4 angle, one hand mid-gesture.',sc:null,ou:null},
+    {id:'lfb-b',pose:'full body from behind, back to camera.',sc:null,ou:null},
+    ...(lib.outfit||[]),...(lib.scene||[]),...(lib.product||[]),
+  ];
+  const item=all.find(x=>x.id===SEL_LIB)||(lib.video||[]).find(x=>x.id===SEL_LIB);
+  if(!item) return;
+  let pt='',nt=NEG;
+  if(LIB_TYPE==='video'){
+    const v=(lib.video||[]).find(x=>x.id===SEL_LIB)||(lib.video||[])[0];
+    if(!v) return;
+    const sp=gv('spol')==='woman'?'Woman':'Man',pk=gv('poklic')||'person';
+    pt=`Subtle realistic human motion. ${sp}, ${pk}. ${v.mot} Natural eye blinking, slow chest movement from breathing. Camera completely static, no movement, no zoom, no pan.`;
+    nt="fast movement, talking exaggeratedly, walking off frame, camera movement, zoom, pan, morphing, distortion, unnatural motion, too smooth, CGI, blurry face, materializing objects";
+  } else {
+    pt=buildPrompt(item.pose,item.sc||undefined,item.ou||undefined,item.withProd||false);
+    if(LIB_TYPE==='fullbody') nt=NEG+', cropped body, portrait only';
+    if(LIB_TYPE==='scene') nt=NEG+', posing, looking at camera, staged';
+    if(LIB_TYPE==='product') nt=NEG+', product floating, product distorted, no product visible';
+  }
+  document.getElementById('pt-lib').textContent=pt;
+  document.getElementById('nt-lib').textContent=nt;
+  const rb=document.getElementById('rbox');rb.style.display='block';
+  document.getElementById('rimgs').innerHTML=(CHAR_IMGS.length
+    ?CHAR_IMGS.slice(0,3).map(u=>`<img class="ref-img" src="${u}" alt="ref">`).join('')
+    :'<span style="font-size:11px;color:var(--text3)">Uploadaj character sliko za reference</span>')
+    +(PROD_IMG&&LIB_TYPE==='product'?`<img class="ref-img" src="${PROD_IMG}" alt="produkt" style="border-color:var(--green-light)">`:'' );
+}
+
+// ─── HELPERS ───────────────────────────────────────────────
+function togSec(id){document.getElementById(id).classList.toggle('open');}
+function cp(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{const o=btn.textContent;btn.textContent='✓ Kopirano';setTimeout(()=>btn.textContent=o,2000);});
+}
+function cpAll(pid,nid,btn){
+  const p=document.getElementById(pid).textContent,n=document.getElementById(nid).textContent;
+  navigator.clipboard.writeText('PROMPT:\n'+p+'\n\nNEGATIVE PROMPT:\n'+n).then(()=>{btn.textContent='✓ Kopirano';setTimeout(()=>btn.textContent='Kopiraj vse ↗',2000);});
+}
+
+document.addEventListener('DOMContentLoaded',initAll);
+
+</script>
 </body>
 </html>

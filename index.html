@@ -211,7 +211,13 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--blue-light);border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.feedback-box{background:var(--bg3);border:1px solid var(--accent2);border-radius:11px;padding:14px;margin-top:1rem}
+.satisfaction-box{background:var(--bg3);border:1px solid var(--border2);border-radius:11px;padding:14px;margin-top:1rem;text-align:center}
+.satisfaction-q{font-size:13px;color:var(--text);margin-bottom:10px}
+.satisfaction-btns{display:flex;gap:8px;justify-content:center}
+.btn-yes{padding:9px 24px;font-size:13px;font-weight:500;cursor:pointer;background:var(--green);border:none;border-radius:9px;color:white;font-family:'DM Sans',sans-serif;transition:background 0.2s}
+.btn-yes:hover{background:var(--green-light)}
+.btn-no{padding:9px 24px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;border:1px solid var(--border2);border-radius:9px;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.btn-no:hover{border-color:var(--accent2);color:var(--text)}
 .feedback-title{font-size:13px;color:var(--text);margin-bottom:10px;font-weight:400}
 .feedback-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .fbchip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
@@ -490,7 +496,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 <!-- P3 -->
 <div class="phase" id="phase-3">
   <div class="phase-title">Character base prompt</div>
-  <div class="phase-sub">Kopiraj → generiraj v Higgsfield → uploadaj rezultat</div>
+  <div class="phase-sub">Kopiraj → generiraj v Higgsfield → vrni se sem</div>
   <div class="type-row">
     <button class="type-btn active" id="tc-portrait" onclick="setType('portrait')">Portrait</button>
     <button class="type-btn" id="tc-fullbody" onclick="setType('fullbody')">Full body</button>
@@ -515,40 +521,53 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
       <div class="eval-result" id="eval-res-main"></div>
     </div>
   </div>
+
+  <!-- SATISFACTION (pokaže se ko kopiraš) -->
+  <div class="satisfaction-box" id="satisfaction-box" style="display:none">
+    <div class="satisfaction-q">Si zadovoljen z generiranim karakterjem?</div>
+    <div class="satisfaction-btns">
+      <button class="btn-yes" onclick="showFeedbackOrContinue(true)">Da, nadaljuj →</button>
+      <button class="btn-no" onclick="showFeedbackOrContinue(false)">Ne, kaj zamenjamo</button>
+    </div>
+  </div>
+
+  <!-- FEEDBACK (skrito) -->
+  <div class="feedback-box" id="feedback-box" style="display:none">
+    <div class="feedback-title">Kaj zamenjamo?</div>
+    <div class="feedback-chips">
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-hlen c-htex">Lasje</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="sw-skin">Barva kože</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-ostyle">Obleka</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-expr">Izraz na obrazu</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-l03">Ozadje</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-l06">Svetloba</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-l08">Color grading</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-l09">Koža / realizem</button>
+      <button class="fbchip" onclick="addFeedback(this)" data-layer="c-angle">Kot kamere</button>
+    </div>
+    <textarea class="q-input" id="feedback-custom" placeholder="ali opiši kaj bi spremenil..." style="margin-top:8px;min-height:44px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-ai" onclick="applyFeedback()" id="btn-feedback">
+        <span class="spinner" id="sp-feedback" style="display:none"></span>
+        Popravi prompt →
+      </button>
+    </div>
+    <div id="feedback-note"></div>
+  </div>
+
+  <!-- UPLOAD (opcijsko) -->
   <div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem">
-    <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Ko si zadovoljen — uploadaj generirano sliko za nadaljevanje</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:7px">Opcijsko — uploadaj generirano sliko za reference v naslednjih promptih</div>
     <div class="upload-zone" id="char-upload-zone" onclick="document.getElementById('upl-char').click()">
       <div style="font-size:20px;opacity:0.4">↑</div>
-      <div class="upload-zone-text">Klikni za upload ali povleci sliko karakterja sem</div>
+      <div class="upload-zone-text">Upload slike (opcijsko)</div>
       <input type="file" id="upl-char" accept="image/*" style="display:none" onchange="handleCharUpload(event)">
     </div>
     <div class="char-uploaded" id="char-uploaded">
       <img class="char-thumb" id="char-thumb" alt=""/>
       <div>
-        <div class="char-uploaded-title">Karakter zaklenjen ✓</div>
-        <div class="char-uploaded-sub" id="char-sub">Karakter shranjen kot reference.</div>
-      </div>
-    </div>
-
-    <div class="feedback-box" id="feedback-box" style="display:none">
-      <div class="feedback-title">Kaj bi popravil na generiranem karakterju?</div>
-      <div class="feedback-chips" id="feedback-chips">
-        <button class="fbchip" onclick="addFeedback(this)">Lasje niso pravi</button>
-        <button class="fbchip" onclick="addFeedback(this)">Barva kože</button>
-        <button class="fbchip" onclick="addFeedback(this)">Obleka ni prava</button>
-        <button class="fbchip" onclick="addFeedback(this)">Izraz na obrazu</button>
-        <button class="fbchip" onclick="addFeedback(this)">Ozadje</button>
-        <button class="fbchip" onclick="addFeedback(this)">Svetloba</button>
-        <button class="fbchip" onclick="addFeedback(this)">Preveč retuširano</button>
-        <button class="fbchip" onclick="addFeedback(this)">Roke so napačne</button>
-      </div>
-      <textarea class="q-input" id="feedback-custom" placeholder="ali opiši kaj bi spremenil..." style="margin-top:8px;min-height:48px"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn-ai" onclick="applyFeedback()" id="btn-feedback">
-          <span class="spinner" id="sp-feedback" style="display:none"></span>
-          Popravi prompt →
-        </button>
-        <button class="btn-skip" style="flex:1;margin-top:0" onclick="goTo(4)">Zadovoljen — nadaljuj →</button>
+        <div class="char-uploaded-title">Slika shranjena kot reference ✓</div>
+        <div class="char-uploaded-sub" id="char-sub"></div>
       </div>
     </div>
   </div>
@@ -1332,57 +1351,43 @@ function checkWizard(){
   if(btn) btn.disabled=!(q1&&q2);
 }
 
+function showFeedbackOrContinue(satisfied){
+  if(satisfied){goTo(4);}
+  else{
+    const fb=document.getElementById('feedback-box');
+    if(fb){fb.style.display='block';fb.scrollIntoView({behavior:'smooth',block:'start'});}
+  }
+}
+
 function addFeedback(btn){
   btn.classList.toggle('active');
+  const layers=(btn.dataset.layer||'').split(' ');
+  layers.forEach(l=>{
+    if(['c-l01','c-l06','c-angle','c-l05'].includes(l)) document.getElementById('sb6')?.classList.add('open');
+    if(['c-l03','c-l08','c-l09','c-l10'].includes(l)) document.getElementById('sb7')?.classList.add('open');
+    if(l.includes('hlen')||l.includes('htex')) document.getElementById('sb2')?.classList.add('open');
+    if(l.includes('skin')||l==='c-fdet') document.getElementById('sb3')?.classList.add('open');
+    if(l==='c-ostyle') document.getElementById('sb4')?.classList.add('open');
+    if(l==='c-expr'||l==='c-l02') document.getElementById('sb5')?.classList.add('open');
+  });
 }
 
 async function applyFeedback(){
   const chips=Array.from(document.querySelectorAll('.fbchip.active')).map(x=>x.textContent);
   const custom=document.getElementById('feedback-custom')?.value.trim();
   const issues=[...chips,custom].filter(Boolean);
-  if(!issues.length){goTo(4);return;}
-
+  if(!issues.length) return;
   const btn=document.getElementById('btn-feedback');
   const sp=document.getElementById('sp-feedback');
   btn.disabled=true;sp.style.display='inline-block';
-
-  // Map feedback to layer fixes
-  const fixes={
-    'Lasje niso pravi':'c-hlen',
-    'Barva kože':'c-l09',
-    'Obleka ni prava':'c-ostyle',
-    'Izraz na obrazu':'c-expr',
-    'Ozadje':'c-l03',
-    'Svetloba':'c-l06',
-    'Preveč retuširano':'c-l09',
-    'Roke so napačne':null,
-  };
-
-  // Open relevant sections
-  issues.forEach(issue=>{
-    if(issue.includes('Lasje')||issue.includes('kož')||issue.includes('Obleka')||issue.includes('Izraz')||issue.includes('Roke')){
-      document.getElementById('sb2')?.classList.add('open');
-      document.getElementById('sb3')?.classList.add('open');
-      document.getElementById('sb4')?.classList.add('open');
-    }
-    if(issue.includes('Ozadje')||issue.includes('Svetlob')||issue.includes('retuš')){
-      document.getElementById('sb6')?.classList.add('open');
-      document.getElementById('sb7')?.classList.add('open');
-    }
-  });
-
-  // Regenerate prompt with issues noted
   genMain();
   btn.disabled=false;sp.style.display='none';
-
-  // Show what was changed
-  const fb=document.getElementById('feedback-box');
-  if(fb){
-    const note=document.createElement('div');
-    note.style.cssText='font-size:11px;color:var(--green-light);margin-top:8px;padding:6px 10px;background:rgba(74,124,89,0.1);border-radius:6px';
-    note.textContent='✓ Prompt posodobljen. Generiraj novo sliko in uploadaj za primerjavo.';
-    fb.appendChild(note);
+  const note=document.getElementById('feedback-note');
+  if(note){
+    note.innerHTML='<div style="font-size:11px;color:var(--green-light);margin-top:8px;padding:6px 10px;background:rgba(74,124,89,0.1);border-radius:6px">✓ Prompt posodobljen — kopiraj in generiraj znova. Ko si zadovoljen, klikni Da spodaj.</div>';
   }
+  // Scroll back to prompt
+  document.getElementById('pt-main')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ─── UPLOADS ───────────────────────────────────────────────
@@ -1494,7 +1499,15 @@ function cp(id,btn){
 }
 function cpAll(pid,nid,btn){
   const p=document.getElementById(pid).textContent,n=document.getElementById(nid).textContent;
-  navigator.clipboard.writeText('PROMPT:\n'+p+'\n\nNEGATIVE PROMPT:\n'+n).then(()=>{btn.textContent='✓ Kopirano';setTimeout(()=>btn.textContent='Kopiraj vse ↗',2000);});
+  navigator.clipboard.writeText('PROMPT:\n'+p+'\n\nNEGATIVE PROMPT:\n'+n).then(()=>{
+    btn.textContent='✓ Kopirano';
+    setTimeout(()=>btn.textContent='Kopiraj vse ↗',2000);
+    // Pokaži satisfaction box samo v fazi 3
+    if(pid==='pt-main'){
+      const sb=document.getElementById('satisfaction-box');
+      if(sb){sb.style.display='block';sb.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded',initAll);

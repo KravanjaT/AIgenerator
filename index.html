@@ -5,254 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Character Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#0e0e0e;--bg2:#161616;--bg3:#1e1e1e;--bg4:#242424;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0ede8;--text2:#8a8680;--text3:#5a5854;--accent:#c8b89a;--accent2:#8a7a68;--green:#4a7c59;--green-light:#6aac7a;--blue:#3a6a8a;--blue-light:#5a9abc}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh}
-.header{padding:1.5rem 2rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:baseline;justify-content:space-between}
-.header-left{display:flex;align-items:baseline;gap:1rem}
-.header h1{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--accent);font-weight:400}
-.header span{font-size:0.7rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase}
-.ai-badge{font-size:10px;padding:4px 10px;border-radius:20px;background:rgba(90,154,188,0.15);border:1px solid var(--blue);color:var(--blue-light);font-weight:500}
-.progress{display:flex;padding:1rem 2rem;gap:0;border-bottom:1px solid var(--border);overflow-x:auto}
-.prog-step{display:flex;align-items:center;flex-shrink:0}
-.prog-dot{width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;transition:all 0.3s}
-.prog-dot.active{border-color:var(--accent);color:var(--accent)}
-.prog-dot.done{background:var(--green);border-color:var(--green);color:white}
-.prog-label{font-size:11px;color:var(--text3);margin:0 8px;white-space:nowrap}
-.prog-label.active{color:var(--accent)}
-.prog-label.done{color:var(--green-light)}
-.prog-line{width:20px;height:1px;background:var(--border);flex-shrink:0}
-.prog-line.done{background:var(--green)}
-.main{display:grid;grid-template-columns:1fr 320px;min-height:calc(100vh - 120px)}
-.left{padding:1.75rem 2rem;border-right:1px solid var(--border);overflow-y:auto}
-.right{padding:1.5rem;background:var(--bg2);position:sticky;top:0;height:calc(100vh - 120px);overflow-y:auto}
-.phase{display:none}
-.phase.active{display:block}
-.phase-title{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text);margin-bottom:0.2rem;font-weight:400}
-.phase-sub{font-size:12px;color:var(--text2);margin-bottom:1.5rem}
-
-/* AI INPUT */
-.ai-input-box{background:var(--bg3);border:1px solid var(--blue);border-radius:14px;padding:16px;margin-bottom:1.5rem;position:relative}
-.ai-input-label{font-size:10px;color:var(--blue-light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--blue-light);animation:pulse 2s infinite}
-.ai-textarea{width:100%;background:transparent;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;height:56px;line-height:1.5;outline:none}
-.ai-textarea::placeholder{color:var(--text3)}
-.ai-btn-row{display:flex;gap:8px;margin-top:10px}
-.btn-ai{padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--blue);border-radius:8px;background:rgba(58,106,138,0.15);color:var(--blue-light);font-family:'DM Sans',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:6px}
-.btn-ai:hover{background:rgba(58,106,138,0.3)}
-.btn-ai:disabled{opacity:0.4;cursor:not-allowed}
-.ai-thinking{font-size:11px;color:var(--blue-light);padding:8px 0;display:none}
-.ai-thinking.vis{display:flex;align-items:center;gap:8px}
-.ai-result{background:rgba(58,106,138,0.08);border:1px solid var(--blue);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--text2);line-height:1.6;display:none}
-.ai-result.vis{display:block}
-.ai-result strong{color:var(--blue-light);font-weight:500}
-
-/* NICHE */
-.niche-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
-.niche-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.5rem}
-.niche-card{border:1px solid var(--border2);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;background:var(--bg3);transition:all 0.15s}
-.niche-card:hover{border-color:var(--accent2);background:var(--bg4)}
-.niche-card.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
-.niche-icon{font-size:20px;margin-bottom:5px;line-height:1}
-.niche-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
-.niche-card.active .niche-name{color:var(--accent)}
-.niche-desc{font-size:10px;color:var(--text3);line-height:1.4}
-.purpose-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1.5rem}
-.purpose-card{border:1px solid var(--border2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--bg3);transition:all 0.15s;display:flex;align-items:center;gap:10px}
-.purpose-card:hover{border-color:var(--accent2)}
-.purpose-card.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
-.purpose-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0}
-.purpose-card.active .purpose-dot{background:var(--accent)}
-.purpose-name{font-size:12px;color:var(--text2)}
-.purpose-card.active .purpose-name{color:var(--accent)}
-
-/* FORM */
-.sec{margin-bottom:1rem;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.sec-head{padding:10px 14px;background:var(--bg3);display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
-.sec-head:hover{background:var(--bg4)}
-.sec-name{font-size:13px;font-weight:500;color:var(--text)}
-.sec-hint{font-size:11px;color:var(--text3)}
-.sec-body{padding:13px 14px;display:none;border-top:1px solid var(--border)}
-.sec-body.open{display:block}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.field{display:flex;flex-direction:column;gap:4px}
-.field.full{grid-column:1/-1}
-.field label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em}
-.field input,.field select{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:7px 11px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text)}
-.field input:focus,.field select:focus{outline:none;border-color:var(--accent2)}
-.field select option{background:var(--bg2)}
-.chip-group{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
-.chip{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
-.chip:hover{border-color:var(--accent2);color:var(--text)}
-.chip.active{background:rgba(200,184,154,0.12);border-color:var(--accent);color:var(--accent);font-weight:500}
-.clabel{font-size:10px;color:var(--text3);margin-bottom:4px;margin-top:10px;text-transform:uppercase;letter-spacing:0.05em}
-.clabel:first-child{margin-top:0}
-.facetype-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:4px}
-.ftcard{border:1px solid var(--border2);border-radius:10px;padding:9px 6px;text-align:center;cursor:pointer;background:var(--bg3);transition:all 0.15s}
-.ftcard:hover{border-color:var(--accent2)}
-.ftcard.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
-.ftcard-icon{font-size:16px;margin-bottom:3px;line-height:1}
-.ftcard-lbl{font-size:10px;color:var(--text2)}
-.ftcard.active .ftcard-lbl{color:var(--accent)}
-.ftcard-desc{font-size:9px;color:var(--text3);margin-top:2px;line-height:1.3}
-.swatch-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
-.sw-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
-.sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;transition:all 0.15s}
-.sw:hover{transform:scale(1.15)}
-.sw.active{border-color:var(--accent)}
-.sw-lbl{font-size:9px;color:var(--text3)}
-
-/* PRODUCT */
-.product-upload-area{border:2px dashed var(--border2);border-radius:16px;padding:2rem;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:1.5rem}
-.product-upload-area:hover{border-color:var(--accent2);background:rgba(200,184,154,0.04)}
-.product-upload-area.has-image{border-color:var(--green);border-style:solid}
-.product-preview{width:100%;max-height:200px;object-fit:contain;border-radius:10px;display:none;margin-bottom:0.5rem}
-.placement-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
-.placement-card{border:1px solid var(--border2);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--bg3);transition:all 0.15s}
-.placement-card:hover{border-color:var(--accent2)}
-.placement-card.active{border-color:var(--accent);background:rgba(200,184,154,0.08)}
-.placement-icon{font-size:18px;margin-bottom:4px;line-height:1}
-.placement-name{font-size:11px;font-weight:500;color:var(--text2)}
-.placement-card.active .placement-name{color:var(--accent)}
-
-/* BUTTONS */
-.type-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
-.type-btn{flex:1;min-width:70px;padding:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);border-radius:10px;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s;text-align:center}
-.type-btn:hover{border-color:var(--accent2);color:var(--text)}
-.type-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,184,154,0.08)}
-.shot-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
-.shot-btn{padding:6px 13px;font-size:12px;cursor:pointer;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s}
-.shot-btn:hover{border-color:var(--accent2);color:var(--text)}
-.shot-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,184,154,0.08);font-weight:500}
-.btn-primary{width:100%;padding:11px;font-size:13px;font-weight:500;cursor:pointer;background:var(--accent2);border:none;border-radius:10px;color:var(--bg);font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-top:0.75rem}
-.btn-primary:hover{background:var(--accent)}
-.btn-skip{width:100%;padding:9px;font-size:12px;cursor:pointer;background:transparent;border:1px solid var(--border2);border-radius:10px;color:var(--text3);font-family:'DM Sans',sans-serif;margin-top:0.5rem}
-.btn-skip:hover{border-color:var(--accent2);color:var(--text2)}
-
-/* OUTPUT */
-.out-block{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px;margin-top:0.75rem}
-.out-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;font-family:'DM Mono',monospace}
-.out-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);white-space:pre-wrap;line-height:1.7;background:var(--bg2);border-radius:8px;padding:11px;margin-bottom:7px;max-height:200px;overflow-y:auto}
-.out-neg{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);white-space:pre-wrap;line-height:1.6;background:var(--bg3);border-radius:8px;padding:9px;margin-bottom:7px}
-.copy-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
-.btn-copy{font-size:11px;cursor:pointer;padding:4px 11px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s}
-.btn-copy:hover{border-color:var(--accent2);color:var(--text)}
-.btn-copy-all{font-size:11px;cursor:pointer;padding:4px 13px;border-radius:8px;border:1px solid var(--accent2);background:rgba(200,184,154,0.08);color:var(--accent);font-family:'DM Sans',sans-serif;font-weight:500}
-.btn-copy-all:hover{background:rgba(200,184,154,0.18)}
-
-/* AI PROMPT EVALUATOR */
-.eval-box{background:var(--bg3);border:1px solid var(--blue);border-radius:12px;padding:12px;margin-top:10px}
-.eval-title{font-size:10px;color:var(--blue-light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.eval-result{font-size:12px;color:var(--text2);line-height:1.6;display:none}
-.eval-result.vis{display:block}
-.eval-score{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-.score-pill{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:500}
-.score-good{background:rgba(74,124,89,0.2);border:1px solid var(--green);color:var(--green-light)}
-.score-warn{background:rgba(186,117,23,0.2);border:1px solid #ba7517;color:#ef9f27}
-.score-bad{background:rgba(162,45,45,0.2);border:1px solid #a32d2d;color:#f09595}
-.btn-eval{font-size:11px;cursor:pointer;padding:5px 12px;border-radius:8px;border:1px solid var(--blue);background:rgba(58,106,138,0.1);color:var(--blue-light);font-family:'DM Sans',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:5px}
-.btn-eval:hover{background:rgba(58,106,138,0.25)}
-.btn-eval:disabled{opacity:0.4;cursor:not-allowed}
-
-/* CHAR UPLOAD */
-.upload-zone{border:1px dashed var(--border2);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;margin-top:1rem}
-.upload-zone:hover{border-color:var(--accent2);background:rgba(200,184,154,0.04)}
-.upload-zone-text{font-size:12px;color:var(--text3);margin-top:5px}
-.char-uploaded{border:1px solid var(--green);border-radius:12px;padding:12px;margin-top:1rem;display:none;align-items:center;gap:12px}
-.char-uploaded.vis{display:flex}
-.char-thumb{width:60px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border2)}
-.char-uploaded-info{flex:1}
-.char-uploaded-title{font-size:12px;color:var(--green-light);font-weight:500;margin-bottom:4px}
-.char-uploaded-sub{font-size:11px;color:var(--text3);line-height:1.5}
-.ai-analyzing{font-size:11px;color:var(--blue-light);display:flex;align-items:center;gap:6px;margin-top:6px}
-
-/* RIGHT PANEL */
-.panel-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green-light);animation:pulse 2s infinite;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-.summary-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:1rem}
-.sum-name{font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--accent);margin-bottom:3px;min-height:26px}
-.sum-role{font-size:11px;color:var(--text2);margin-bottom:10px;min-height:16px}
-.sum-divider{height:1px;background:var(--border);margin:8px 0}
-.sum-row{display:flex;justify-content:space-between;align-items:flex-start;padding:3px 0;border-bottom:1px solid var(--border)}
-.sum-row:last-child{border-bottom:none}
-.sum-key{font-size:11px;color:var(--text3);min-width:80px;flex-shrink:0}
-.sum-val{font-size:11px;color:var(--text3);text-align:right;line-height:1.4}
-.sum-val.set{color:var(--text2)}
-.sum-section-title{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;margin-top:8px}
-.niche-badge{display:inline-block;font-size:10px;padding:3px 9px;border-radius:20px;background:rgba(200,184,154,0.1);border:1px solid var(--accent2);color:var(--accent);margin-bottom:6px;margin-right:4px}
-.purpose-badge{display:inline-block;font-size:10px;padding:3px 9px;border-radius:20px;background:rgba(74,124,89,0.1);border:1px solid var(--green);color:var(--green-light);margin-bottom:6px}
-.ai-analysis-card{background:rgba(58,106,138,0.08);border:1px solid var(--blue);border-radius:10px;padding:10px;margin-top:8px;display:none}
-.ai-analysis-card.vis{display:block}
-.ai-analysis-title{font-size:10px;color:var(--blue-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
-.ai-analysis-img{width:60px;height:80px;object-fit:cover;border-radius:6px;float:left;margin-right:10px}
-.ai-analysis-text{font-size:11px;color:var(--text2);line-height:1.6}
-.product-sum-card{background:var(--bg4);border:1px solid var(--green);border-radius:10px;padding:10px;margin-top:8px;display:none}
-.product-sum-card.vis{display:block}
-.product-sum-title{font-size:10px;color:var(--green-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
-.product-sum-img{width:100%;max-height:80px;object-fit:contain;border-radius:6px;margin-bottom:5px;display:none}
-.product-sum-name{font-size:12px;color:var(--text2);font-weight:500}
-.product-sum-sub{font-size:11px;color:var(--text3);margin-top:2px}
-.divider{height:1px;background:var(--border);margin:1rem 0}
-.phase-list{display:flex;flex-direction:column;gap:5px}
-.phase-item{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:8px;border:1px solid var(--border)}
-.phase-item.locked{opacity:0.35}
-.phase-item.done{border-color:var(--green);background:rgba(74,124,89,0.08)}
-.phase-item.current{border-color:var(--accent2);background:rgba(200,184,154,0.06)}
-.phase-pdot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0}
-.phase-item.done .phase-pdot{background:var(--green-light)}
-.phase-item.current .phase-pdot{background:var(--accent)}
-.phase-item-name{font-size:11px;color:var(--text2);flex:1}
-.phase-item.current .phase-item-name{color:var(--accent)}
-.phase-item.done .phase-item-name{color:var(--green-light)}
-.phase-item-tag{font-size:10px;color:var(--text3)}
-.ref-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px}
-.ref-box-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
-.ref-img{width:54px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)}
-.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--blue-light);border-radius:50%;animation:spin 0.8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="header">
-  <div class="header-left">
-    <h1>AI Character Generator</h1>
-    <span>AI Universa · 10-Layer Protocol</span>
-  </div>
-  <span class="ai-badge">Claude AI powered</span>
+  <h1>AI Character Generator</h1>
+  <span>AI Universa · 10-Layer Protocol</span>
 </div>
+
+<div class="mode-switch">
+  <button class="mode-btn active-std" id="btn-mode-std" onclick="setMode('std')">Standardni način</button>
+  <button class="mode-btn" id="btn-mode-ai" onclick="setMode('ai')">Claude AI način</button>
+  <span class="mode-info" id="mode-info">Deluje povsod — GitHub Pages, brez API ključa</span>
+</div>
+
 <div class="progress" id="pgbar"></div>
 <div class="main">
 <div class="left">
 
-<!-- P0: NIŠA -->
+<!-- P0 -->
 <div class="phase active" id="phase-0">
   <div class="phase-title">Za kaj je karakter?</div>
-  <div class="phase-sub">Niša in namen določita vse — ali pa opiši v enem stavku</div>
+  <div class="phase-sub">Niša in namen določita vse — obleko, svetlobo, ozadje, scene</div>
 
-  <div class="ai-input-box">
-    <div class="ai-input-label"><div class="ai-dot"></div>AI razume naravni jezik</div>
-    <textarea class="ai-textarea" id="ai-intent" placeholder="npr. ženska, 30 let, mediteranski tip, svetlo rjavi lasje, za kozmetično kampanjo na Instagramu..."></textarea>
+  <div class="ai-panel" id="ai-panel-0">
+    <div class="ai-panel-title"><div class="ai-dot"></div>AI — opiši v enem stavku</div>
+    <textarea class="ai-textarea" id="ai-intent" placeholder="npr. ženska 30 let, mediteranski tip, svetlo rjavi lasje, kozmetika, Instagram brand ambassador..."></textarea>
     <div class="ai-btn-row">
       <button class="btn-ai" onclick="aiAnalyzeIntent()" id="btn-ai-intent">
         <span class="spinner" id="sp-intent" style="display:none"></span>
         Analiziraj z AI →
       </button>
     </div>
-    <div class="ai-thinking" id="think-intent"><div class="spinner"></div>Claude analizira tvoj opis...</div>
     <div class="ai-result" id="res-intent"></div>
   </div>
 
-  <div class="niche-label">— ali izberi ročno —</div>
-  <div class="niche-label">Namen</div>
-  <div class="purpose-grid" id="pgrid"></div>
-  <div class="niche-label">Industrija / niša</div>
-  <div class="niche-grid" id="ngrid"></div>
+  <div class="nlabel" id="manual-label">— ali izberi ročno —</div>
+  <div class="nlabel">Namen</div>
+  <div class="pgrid" id="pgrid"></div>
+  <div class="nlabel">Industrija / niša</div>
+  <div class="ngrid" id="ngrid"></div>
   <button class="btn-primary" id="btn-p0" onclick="goTo(1)" style="display:none">Nadaljuj → Videz karakterja</button>
 </div>
 
-<!-- P1: VIDEZ -->
+<!-- P1 -->
 <div class="phase" id="phase-1">
   <div class="phase-title">Videz karakterja</div>
   <div class="phase-sub">Vsaka sprememba se takoj posodobi v povzetku desno</div>
@@ -260,30 +56,30 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <div class="sec-head" onclick="togSec('sb0')"><span class="sec-name">Osnovno</span><span class="sec-hint">ime, starost, spol, poklic</span></div>
     <div class="sec-body open" id="sb0">
       <div class="grid2">
-        <div class="field"><label>Ime</label><input type="text" id="ime" placeholder="npr. Ana" oninput="lu()"/></div>
+        <div class="field"><label>Ime</label><input type="text" id="ime" placeholder="Ana" oninput="lu()"/></div>
         <div class="field"><label>Starost</label><input type="number" id="starost" placeholder="32" min="18" max="90" oninput="lu()"/></div>
         <div class="field"><label>Spol</label><select id="spol" onchange="lu()"><option value="woman">Ženska</option><option value="man">Moški</option></select></div>
-        <div class="field"><label>Poklic / vloga</label><input type="text" id="poklic" placeholder="npr. lifestyle creator..." oninput="lu()"/></div>
+        <div class="field"><label>Poklic</label><input type="text" id="poklic" placeholder="lifestyle creator..." oninput="lu()"/></div>
       </div>
     </div>
   </div>
   <div class="sec">
     <div class="sec-head" onclick="togSec('sb1')"><span class="sec-name">Tip obraza</span><span class="sec-hint">vizualni tip — struktura in poteze</span></div>
-    <div class="sec-body open" id="sb1"><div class="facetype-grid" id="ftgrid"></div></div>
+    <div class="sec-body open" id="sb1"><div class="ftgrid" id="ftgrid"></div></div>
   </div>
   <div class="sec">
     <div class="sec-head" onclick="togSec('sb2')"><span class="sec-name">Lasje</span><span class="sec-hint">barva, dolžina, tekstura</span></div>
     <div class="sec-body open" id="sb2">
-      <div class="clabel">Barva</div><div class="swatch-row" id="sw-hair"></div>
+      <div class="clabel">Barva</div><div class="sw-row" id="sw-hair"></div>
       <div class="clabel">Dolžina</div>
-      <div class="chip-group" id="c-hlen">
+      <div class="cg" id="c-hlen">
         <button class="chip" data-val="very short hair">Zelo kratki</button>
         <button class="chip" data-val="short hair">Kratki</button>
         <button class="chip active" data-val="medium length hair">Srednji</button>
         <button class="chip" data-val="long hair">Dolgi</button>
       </div>
       <div class="clabel">Tekstura</div>
-      <div class="chip-group" id="c-htex">
+      <div class="cg" id="c-htex">
         <button class="chip active" data-val="slightly disheveled, naturally messy">Rahlo neurejen</button>
         <button class="chip" data-val="straight and neat, well-groomed">Raven, urejen</button>
         <button class="chip" data-val="wavy and textured">Valovit</button>
@@ -294,10 +90,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <div class="sec">
     <div class="sec-head" onclick="togSec('sb3')"><span class="sec-name">Obraz & koža</span><span class="sec-hint">oči, koža, detajli</span></div>
     <div class="sec-body open" id="sb3">
-      <div class="clabel">Barva oči</div><div class="swatch-row" id="sw-eyes"></div>
-      <div class="clabel">Koža</div><div class="swatch-row" id="sw-skin"></div>
+      <div class="clabel">Barva oči</div><div class="sw-row" id="sw-eyes"></div>
+      <div class="clabel">Koža</div><div class="sw-row" id="sw-skin"></div>
       <div class="clabel">Obrazni detajli</div>
-      <div class="chip-group" id="c-fdet">
+      <div class="cg" id="c-fdet">
         <button class="chip" data-val="3-day stubble beard">3-dnevna brada</button>
         <button class="chip" data-val="full beard, well-kept">Polna brada</button>
         <button class="chip" data-val="clean shaven">Obritan</button>
@@ -311,7 +107,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <div class="sec-head" onclick="togSec('sb4')"><span class="sec-name">Postava & obleka</span><span class="sec-hint">tip telesa, osnovna obleka</span></div>
     <div class="sec-body" id="sb4">
       <div class="clabel">Postava</div>
-      <div class="chip-group" id="c-body">
+      <div class="cg" id="c-body">
         <button class="chip" data-val="slim and lean build">Vitek</button>
         <button class="chip active" data-val="natural proportions, not athletic">Naravna</button>
         <button class="chip" data-val="athletic and fit build">Atletski</button>
@@ -319,12 +115,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
         <button class="chip" data-val="full figured, natural curves">Polnejši</button>
       </div>
       <div class="clabel">Osnovna obleka</div>
-      <div class="field full" style="margin-top:4px"><input type="text" id="outfit" placeholder="npr. bela bombažna majica, jeans" oninput="lu()"/></div>
-      <div class="chip-group" style="margin-top:8px" id="c-ostyle">
+      <div class="field full" style="margin-top:4px"><input type="text" id="outfit" placeholder="npr. bela majica, jeans" oninput="lu()"/></div>
+      <div class="cg" style="margin-top:7px" id="c-ostyle">
         <button class="chip" data-val="clothes look worn and effortless, lived-in">Worn / effortless</button>
         <button class="chip active" data-val="smart casual, quality fabrics, understated">Smart casual</button>
         <button class="chip" data-val="business casual, professional but relaxed">Business casual</button>
-        <button class="chip" data-val="casual home clothes, comfortable and intimate">Casual home</button>
+        <button class="chip" data-val="casual home clothes, comfortable">Casual home</button>
         <button class="chip" data-val="luxury understated, high-end materials, no logos">Luxury</button>
       </div>
     </div>
@@ -332,7 +128,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <button class="btn-primary" onclick="goTo(2)">Nadaljuj → Stil & feel</button>
 </div>
 
-<!-- P2: STIL -->
+<!-- P2 -->
 <div class="phase" id="phase-2">
   <div class="phase-title">Stil & feel</div>
   <div class="phase-sub">Nastavitve glede na nišo so prednastavjene — popravi kar ni prav</div>
@@ -340,7 +136,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <div class="sec-head" onclick="togSec('sb5')"><span class="sec-name">Izraz & energija</span></div>
     <div class="sec-body open" id="sb5">
       <div class="clabel">Izraz na obrazu</div>
-      <div class="chip-group" id="c-expr">
+      <div class="cg" id="c-expr">
         <button class="chip" data-val="neutral expression, calm and composed">Nevtralen</button>
         <button class="chip" data-val="subtle tired expression, slight heaviness">Utrujen</button>
         <button class="chip" data-val="contemplative, deep in thought">Zamišljen</button>
@@ -349,7 +145,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
         <button class="chip" data-val="focused intensity, eyes sharp and present">Fokusiran</button>
       </div>
       <div class="clabel">Energija</div>
-      <div class="chip-group" id="c-l02">
+      <div class="cg" id="c-l02">
         <button class="chip" data-val="unbothered, candid energy, not posing">Unbothered</button>
         <button class="chip" data-val="mid-action, caught mid-movement">Mid-action</button>
         <button class="chip" data-val="contemplative, deep in thought, quiet">Contemplative</button>
@@ -361,21 +157,21 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <div class="sec-head" onclick="togSec('sb6')"><span class="sec-name">Kamera & svetloba</span></div>
     <div class="sec-body open" id="sb6">
       <div class="clabel">Kot kamere</div>
-      <div class="chip-group" id="c-angle">
+      <div class="cg" id="c-angle">
         <button class="chip active" data-val="eye level camera angle, natural perspective">Eye level</button>
         <button class="chip" data-val="slightly low angle, subject appears powerful">Low angle</button>
         <button class="chip" data-val="slightly high angle, subject appears vulnerable">High angle</button>
         <button class="chip" data-val="dutch angle, slightly tilted, dynamic">Dutch angle</button>
       </div>
       <div class="clabel">Objektiv</div>
-      <div class="chip-group" id="c-l05">
+      <div class="cg" id="c-l05">
         <button class="chip" data-val="35mm lens, handheld shake, motion blur, digital noise, JPEG artifacts">35mm</button>
         <button class="chip" data-val="28mm lens, wide angle, edge distortion">28mm</button>
         <button class="chip" data-val="50mm lens, natural perspective, minimal distortion">50mm</button>
         <button class="chip active" data-val="85mm lens, shallow depth of field, soft bokeh">85mm — bokeh</button>
       </div>
       <div class="clabel">Svetloba</div>
-      <div class="chip-group" id="c-l06">
+      <div class="cg" id="c-l06">
         <button class="chip" data-val="harsh on-camera flash, strong specular highlights, background falls to darkness">Flash</button>
         <button class="chip active" data-val="soft natural window light, warm golden tones, gentle shadows">Okenska — mehka</button>
         <button class="chip" data-val="golden hour sunlight, warm orange tones">Golden hour</button>
@@ -388,14 +184,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <div class="sec-head" onclick="togSec('sb7')"><span class="sec-name">Ozadje, grading & mood</span></div>
     <div class="sec-body" id="sb7">
       <div class="clabel">Aesthetic (L01)</div>
-      <div class="chip-group" id="c-l01">
+      <div class="cg" id="c-l01">
         <button class="chip" data-val="hyper-realistic, raw, candid photograph, documentary aesthetic">Documentary</button>
         <button class="chip active" data-val="hyper-realistic, editorial photograph, high-end magazine aesthetic">Editorial</button>
         <button class="chip" data-val="hyper-realistic, paparazzi-style, candid street photography">Paparazzi</button>
         <button class="chip" data-val="hyper-realistic, raw personal archive photograph">Personal archive</button>
       </div>
       <div class="clabel">Ozadje (L03)</div>
-      <div class="chip-group" id="c-l03">
+      <div class="cg" id="c-l03">
         <button class="chip active" data-val="pure white seamless background, clean neutral studio">Belo / studio</button>
         <button class="chip" data-val="soft grey neutral background, minimal texture">Sivo / minimal</button>
         <button class="chip" data-val="private lived-in interior, warm and personal">Dom / interior</button>
@@ -404,7 +200,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
         <button class="chip" data-val="natural outdoor, soft natural light, greenery">Narava</button>
       </div>
       <div class="clabel">Color grading (L08)</div>
-      <div class="chip-group" id="c-l08">
+      <div class="cg" id="c-l08">
         <button class="chip" data-val="dirty cinematic grading, crushed blacks, heavy film grain, vignette">Cinematic</button>
         <button class="chip active" data-val="clean natural grading, true-to-life colors, minimal processing">Clean / natural</button>
         <button class="chip" data-val="warm vintage grading, faded yellows, lifted shadows">Warm vintage</button>
@@ -412,14 +208,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
         <button class="chip" data-val="black and white film, high contrast, strong grain">Črno-belo</button>
       </div>
       <div class="clabel">Koža (L09)</div>
-      <div class="chip-group" id="c-l09">
+      <div class="cg" id="c-l09">
         <button class="chip" data-val="visible pores, natural imperfections, no retouching, oily sheen, bags under eyes">Maximum realism</button>
         <button class="chip active" data-val="natural skin, minor imperfections, healthy glow">Natural / healthy</button>
         <button class="chip" data-val="tired skin, bags under eyes, exhausted look">Utrujena</button>
         <button class="chip" data-val="morning skin, no makeup, completely raw">Jutranjo</button>
       </div>
       <div class="clabel">Mood (L10)</div>
-      <div class="chip-group" id="c-l10">
+      <div class="cg" id="c-l10">
         <button class="chip" data-val="spontaneous, tired, intimate, private moment, never meant to be public">Spontaneous</button>
         <button class="chip" data-val="contemplative, quiet, weight of thought">Contemplative</button>
         <button class="chip" data-val="candid genuine joy, real unposed happiness">Genuine joy</button>
@@ -431,7 +227,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   <button class="btn-primary" onclick="goTo(3)">Generiraj character base →</button>
 </div>
 
-<!-- P3: CHARACTER BASE -->
+<!-- P3 -->
 <div class="phase" id="phase-3">
   <div class="phase-title">Character base prompt</div>
   <div class="phase-sub">Kopiraj → generiraj v Higgsfield → uploadaj rezultat</div>
@@ -450,57 +246,56 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
       <button class="btn-copy" onclick="cp('nt-main',this)">Kopiraj negative</button>
       <button class="btn-copy-all" onclick="cpAll('pt-main','nt-main',this)">Kopiraj vse ↗</button>
     </div>
-    <div class="eval-box">
+    <div class="eval-box" id="eval-box-main">
       <div class="eval-title"><div class="ai-dot"></div>AI ocena prompta</div>
-      <button class="btn-eval" onclick="aiEvalPrompt()" id="btn-eval">
-        <span class="spinner" id="sp-eval" style="display:none"></span>
-        Oceni prompt z AI
+      <button class="btn-ai" onclick="aiEval('pt-main','eval-res-main','btn-eval-main','sp-eval-main')" id="btn-eval-main">
+        <span class="spinner" id="sp-eval-main" style="display:none"></span>
+        Oceni z AI
       </button>
-      <div class="eval-result" id="eval-result"></div>
+      <div class="eval-result" id="eval-res-main"></div>
     </div>
   </div>
-  <div style="margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1.25rem">
-    <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Ko si zadovoljen — uploadaj generirano sliko. AI bo analiziral kar je bilo generirano.</div>
+  <div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:7px">Ko si zadovoljen — uploadaj generirano sliko za nadaljevanje</div>
     <div class="upload-zone" id="char-upload-zone" onclick="document.getElementById('upl-char').click()">
-      <div style="font-size:22px;opacity:0.4">↑</div>
+      <div style="font-size:20px;opacity:0.4">↑</div>
       <div class="upload-zone-text">Klikni za upload ali povleci sliko karakterja sem</div>
       <input type="file" id="upl-char" accept="image/*" style="display:none" onchange="handleCharUpload(event)">
     </div>
     <div class="char-uploaded" id="char-uploaded">
-      <img class="char-thumb" id="char-thumb" alt="Karakter"/>
-      <div class="char-uploaded-info">
-        <div class="char-uploaded-title">Karakter zaklenjen</div>
-        <div class="char-uploaded-sub" id="char-uploaded-sub">Analiziram sliko...</div>
-        <div class="ai-analyzing" id="ai-analyzing"><div class="spinner"></div>Claude analizira generirano sliko...</div>
+      <img class="char-thumb" id="char-thumb" alt=""/>
+      <div>
+        <div class="char-uploaded-title">Karakter zaklenjen ✓</div>
+        <div class="char-uploaded-sub" id="char-sub">Karakter shranjen kot reference.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- P4: PRODUKT -->
+<!-- P4 -->
 <div class="phase" id="phase-4">
   <div class="phase-title">Dodaj svoj produkt</div>
   <div class="phase-sub">Karakter zaklenjen — zdaj povej kaj prodajaš</div>
-  <div class="product-upload-area" id="prod-upload-area" onclick="document.getElementById('upl-prod').click()">
-    <img id="prod-preview" class="product-preview" alt="Produkt"/>
+  <div class="prod-upload" id="prod-upload-area" onclick="document.getElementById('upl-prod').click()">
+    <img id="prod-preview" class="prod-preview" alt=""/>
     <div id="prod-ph">
-      <div style="font-size:36px;opacity:0.3;margin-bottom:10px">◻</div>
-      <div style="font-size:14px;color:var(--text2);margin-bottom:4px">Uploadaj sliko produkta</div>
+      <div style="font-size:32px;opacity:0.3;margin-bottom:8px">◻</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:3px">Uploadaj sliko produkta</div>
       <div style="font-size:11px;color:var(--text3)">JPG, PNG — idealno na belem ozadju</div>
     </div>
     <input type="file" id="upl-prod" accept="image/*" style="display:none" onchange="handleProdUpload(event)">
   </div>
-  <div class="grid2" style="margin-bottom:1rem">
+  <div class="grid2" style="margin-bottom:0.875rem">
     <div class="field"><label>Ime produkta</label><input type="text" id="prod-name" placeholder="npr. Hydra Plus krema" oninput="lu()"/></div>
     <div class="field"><label>Kratek opis</label><input type="text" id="prod-desc" placeholder="npr. hidratantna, naravni" oninput="lu()"/></div>
   </div>
   <div class="clabel">Kako karakter drži / uporablja produkt?</div>
-  <div class="placement-grid" id="placement-grid"></div>
+  <div class="pl-grid" id="pl-grid"></div>
   <button class="btn-primary" onclick="goTo(5)">Generiraj prompte s produktom →</button>
   <button class="btn-skip" onclick="goTo(5)">Preskoči produkt →</button>
 </div>
 
-<!-- P5: LIBRARY -->
+<!-- P5 -->
 <div class="phase" id="phase-5">
   <div class="phase-title">Kompletna library</div>
   <div class="phase-sub" id="lib-sub">Karakter zaklenjen — generiraj vse prompte</div>
@@ -523,17 +318,17 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
       <button class="btn-copy" onclick="cp('nt-lib',this)">Kopiraj negative</button>
       <button class="btn-copy-all" onclick="cpAll('pt-lib','nt-lib',this)">Kopiraj vse ↗</button>
     </div>
-    <div class="eval-box">
+    <div class="eval-box" id="eval-box-lib">
       <div class="eval-title"><div class="ai-dot"></div>AI ocena prompta</div>
-      <button class="btn-eval" onclick="aiEvalLibPrompt()" id="btn-eval-lib">
+      <button class="btn-ai" onclick="aiEval('pt-lib','eval-res-lib','btn-eval-lib','sp-eval-lib')" id="btn-eval-lib">
         <span class="spinner" id="sp-eval-lib" style="display:none"></span>
-        Oceni prompt z AI
+        Oceni z AI
       </button>
-      <div class="eval-result" id="eval-result-lib"></div>
+      <div class="eval-result" id="eval-res-lib"></div>
     </div>
-    <div class="ref-box" id="rbox" style="margin-top:10px;display:none">
-      <div class="ref-box-title">Character reference</div>
-      <div id="rimgs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+    <div class="ref-box" id="rbox" style="margin-top:8px;display:none">
+      <div class="ref-box-title">Character reference — uploadaj v Higgsfield</div>
+      <div id="rimgs" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px"></div>
     </div>
   </div>
 </div>
@@ -543,761 +338,44 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 <!-- RIGHT -->
 <div class="right">
   <div class="panel-title"><div class="live-dot"></div>Live povzetek</div>
-  <div class="summary-card">
+  <div class="sum-card">
     <div id="sum-badges"></div>
     <div class="sum-name" id="sum-name">—</div>
     <div class="sum-role" id="sum-role">Začni z opisom ali izbiro niše</div>
-    <div class="sum-divider"></div>
-    <div class="sum-section-title">Videz</div>
+    <div class="sum-div"></div>
+    <div class="sum-stitle">Videz</div>
     <div class="sum-row"><span class="sum-key">Tip obraza</span><span class="sum-val" id="sv-face">—</span></div>
     <div class="sum-row"><span class="sum-key">Lasje</span><span class="sum-val" id="sv-hair">—</span></div>
     <div class="sum-row"><span class="sum-key">Oči</span><span class="sum-val" id="sv-eyes">—</span></div>
     <div class="sum-row"><span class="sum-key">Koža</span><span class="sum-val" id="sv-skin">—</span></div>
     <div class="sum-row"><span class="sum-key">Detajli</span><span class="sum-val" id="sv-fdet">—</span></div>
-    <div class="sum-divider"></div>
-    <div class="sum-section-title">Stil & feel</div>
+    <div class="sum-div"></div>
+    <div class="sum-stitle">Stil & feel</div>
     <div class="sum-row"><span class="sum-key">Izraz</span><span class="sum-val" id="sv-expr">—</span></div>
     <div class="sum-row"><span class="sum-key">Svetloba</span><span class="sum-val" id="sv-l06">—</span></div>
     <div class="sum-row"><span class="sum-key">Ozadje</span><span class="sum-val" id="sv-l03">—</span></div>
     <div class="sum-row"><span class="sum-key">Grading</span><span class="sum-val" id="sv-l08">—</span></div>
     <div class="sum-row"><span class="sum-key">Mood</span><span class="sum-val" id="sv-l10">—</span></div>
   </div>
-
-  <div class="ai-analysis-card" id="ai-analysis-card">
+  <div class="ai-analysis-card" id="ai-ac">
     <div class="ai-analysis-title">AI analiza karakterja</div>
-    <img class="ai-analysis-img" id="ai-analysis-img" alt=""/>
-    <div class="ai-analysis-text" id="ai-analysis-text">—</div>
+    <img class="ai-analysis-img" id="ai-ac-img" alt=""/>
+    <div class="ai-analysis-text" id="ai-ac-text">—</div>
     <div style="clear:both"></div>
   </div>
-
-  <div class="product-sum-card" id="prod-sum">
-    <div class="product-sum-title">Produkt</div>
-    <img id="prod-sum-img" class="product-sum-img" alt=""/>
-    <div class="product-sum-name" id="prod-sum-name">—</div>
-    <div class="product-sum-sub" id="prod-sum-sub">—</div>
+  <div class="prod-sum" id="prod-sum">
+    <div class="prod-sum-title">Produkt</div>
+    <img id="prod-sum-img" class="prod-sum-img" alt=""/>
+    <div class="prod-sum-name" id="prod-sum-name">—</div>
+    <div class="prod-sum-sub" id="prod-sum-sub">—</div>
   </div>
-
   <div class="divider"></div>
   <div class="panel-title">Napredek</div>
   <div class="phase-list" id="plist"></div>
 </div>
-</div>
-
-<script>
-const PHASES=[
-  {name:'Niša & namen',tag:'Start'},
-  {name:'Videz',tag:'Fizično'},
-  {name:'Stil & feel',tag:'10 slojev'},
-  {name:'Character base',tag:'Generiranje'},
-  {name:'Produkt',tag:'Oglaševanje'},
-  {name:'Library',tag:'Vsi prompti'},
-];
-let cur=0,charImgs=[],charImgB64=null,prodImg=null,shotType='portrait',libType='portrait',selShot='p-front',selLib='lp-f';
-let ST={hair:'lbrown',eye:'gbrown',skin:'olive',face:'mediteran',niche:null,purpose:null,placement:null};
-
-const PURPOSES=[
-  {id:'product',name:'Predstavitev produkta'},
-  {id:'influencer',name:'Influencer / content'},
-  {id:'linkedin',name:'Profesionalni profil'},
-  {id:'brand',name:'Brand ambassador'},
-  {id:'ugc',name:'UGC content creator'},
-  {id:'personal',name:'Osebni projekt'},
-];
-const NICHES=[
-  {id:'beauty',icon:'✦',name:'Kozmetika & beauty',desc:'nega, make-up, parfumi'},
-  {id:'food',icon:'◈',name:'Hrana & lifestyle',desc:'kuhanje, recepti, restavracije'},
-  {id:'fitness',icon:'◉',name:'Fitnes & zdravje',desc:'šport, wellness, prehrana'},
-  {id:'home',icon:'◫',name:'Dom & garden',desc:'notranjost, vrt, orodje'},
-  {id:'fashion',icon:'◇',name:'Moda & oblačila',desc:'oblačila, dodatki, stajling'},
-  {id:'tech',icon:'◎',name:'Tech & AI',desc:'tehnologija, aplikacije'},
-  {id:'luxury',icon:'◈',name:'Luksuz & lifestyle',desc:'ure, avti, potovanja'},
-  {id:'kids',icon:'◯',name:'Otroški produkti',desc:'igrače, oblačila, vzgoja'},
-  {id:'pet',icon:'◉',name:'Hišni ljubljenci',desc:'hrana, oprema, nega'},
-];
-const PLACEMENTS=[
-  {id:'holding',icon:'◻',name:'Drži v roki',val:'holding the product naturally in one hand, relaxed grip, product clearly visible'},
-  {id:'using',icon:'◈',name:'Uporablja',val:'actively using the product, applying or engaging with it, mid-action'},
-  {id:'table',icon:'◫',name:'Na površini',val:'product placed on surface nearby, character naturally in scene'},
-  {id:'wearing',icon:'◉',name:'Nosi',val:'wearing or incorporating the product as part of appearance'},
-  {id:'showing',icon:'◇',name:'Kaže kameri',val:'presenting the product toward camera, showing it clearly'},
-  {id:'unboxing',icon:'◎',name:'Odkriva',val:'just received or opened the product, genuine curiosity reaction'},
-];
-const NPRESET={
-  beauty:{l01:1,l02:3,l03:0,l05:3,l06:1,l07:4,l08:1,l09:1,l10:3,expr:4,angle:0,bodyIdx:0,ostyle:2},
-  food:{l01:0,l02:1,l03:4,l05:0,l06:2,l07:1,l08:2,l09:1,l10:2,expr:4,angle:0,bodyIdx:2,ostyle:0},
-  fitness:{l01:0,l02:3,l03:5,l05:0,l06:2,l07:4,l08:1,l09:1,l10:2,expr:4,angle:1,bodyIdx:2,ostyle:3},
-  home:{l01:0,l02:0,l03:2,l05:0,l06:1,l07:0,l08:2,l09:0,l10:0,expr:2,angle:0,bodyIdx:1,ostyle:0},
-  fashion:{l01:1,l02:3,l03:1,l05:3,l06:3,l07:4,l08:3,l09:1,l10:3,expr:0,angle:0,bodyIdx:0,ostyle:2},
-  tech:{l01:0,l02:2,l03:2,l05:0,l06:0,l07:0,l08:0,l09:0,l10:3,expr:2,angle:0,bodyIdx:1,ostyle:2},
-  luxury:{l01:1,l02:3,l03:1,l05:3,l06:4,l07:4,l08:3,l09:1,l10:4,expr:0,angle:1,bodyIdx:1,ostyle:4},
-  kids:{l01:0,l02:3,l03:5,l05:1,l06:2,l07:4,l08:1,l09:1,l10:2,expr:4,angle:2,bodyIdx:0,ostyle:0},
-  pet:{l01:0,l02:1,l03:5,l05:0,l06:2,l07:4,l08:1,l09:1,l10:2,expr:4,angle:0,bodyIdx:1,ostyle:0},
-};
-const NSCENES={
-  beauty:[
-    {id:'sc1',lbl:'Kopalnica — jutro',pose:'standing at bathroom vanity, looking at reflection, morning skincare routine.',sc:'clean modern bathroom, soft morning light, products on vanity, intimate space'},
-    {id:'sc2',lbl:'Dnevna soba',pose:'sitting on couch in natural light, relaxed, holding beauty product.',sc:'warm cozy living room, soft cushions, natural window light'},
-    {id:'sc3',lbl:'Studio / belo',pose:'standing or sitting, confident natural pose.',sc:'pure white seamless studio background'},
-    {id:'sc4',lbl:'Kavarna — jutro',pose:'sitting at cafe table, holding coffee cup, relaxed morning.',sc:'warm morning cafe, wooden tables, soft natural light, coffee visible'},
-    {id:'sc5',lbl:'Narava / park',pose:'walking or standing outdoors, natural light, candid.',sc:'green park, soft natural daylight, fresh outdoor'},
-  ],
-  food:[
-    {id:'sc1',lbl:'Kuhinja — priprava',pose:'standing at counter, preparing food, mid-action, knife or spoon in hand.',sc:'warm home kitchen, fresh ingredients on counter, natural window light'},
-    {id:'sc2',lbl:'Jedilna miza',pose:'sitting at table, eating or tasting food, genuine candid reaction.',sc:'warm dining table, natural light, food plated, personal home'},
-    {id:'sc3',lbl:'Tržnica',pose:'browsing fresh produce, picking up vegetables, candid outdoor.',sc:'outdoor farmers market, fresh produce, natural daylight, vibrant'},
-    {id:'sc4',lbl:'Restavracija',pose:'sitting at restaurant, looking at menu, relaxed and present.',sc:'warm restaurant interior, candlelight or soft light, table setting'},
-    {id:'sc5',lbl:'Kavarna',pose:'sitting with coffee and food, casual morning, relaxed.',sc:'cozy cafe, warm light, wooden surfaces, coffee and breakfast'},
-  ],
-  fitness:[
-    {id:'sc1',lbl:'Park — tek',pose:'mid-run in park, dynamic action, caught mid-stride, candid.',sc:'green park early morning, soft golden light, trees and path'},
-    {id:'sc2',lbl:'Telovadnica',pose:'using gym equipment, mid-action, focused and present.',sc:'modern gym interior, equipment visible, strong overhead lighting'},
-    {id:'sc3',lbl:'Narava — pohodništvo',pose:'walking on trail, looking at landscape, candid outdoor.',sc:'mountain or forest trail, natural daylight, trees and nature'},
-    {id:'sc4',lbl:'Doma — vadba',pose:'doing yoga or stretching on mat, focused and relaxed.',sc:'bright home interior, yoga mat on wooden floor, natural window light'},
-    {id:'sc5',lbl:'Po vadbi',pose:'sitting relaxed after workout, holding water bottle, candid recovery.',sc:'cafe or outdoor bench, soft natural light, relaxed post-workout'},
-  ],
-  home:[
-    {id:'sc1',lbl:'Vrt',pose:'working in garden, kneeling with garden tools, candid mid-action.',sc:'home garden, green plants and soil, natural daylight'},
-    {id:'sc2',lbl:'Dnevna soba',pose:'arranging interior, standing or sitting, candid home moment.',sc:'warm lived-in living room, furniture and personal objects, window light'},
-    {id:'sc3',lbl:'Delavnica',pose:'working with tools, mid-action, focused on task.',sc:'home workshop or garage, tools visible, work bench'},
-    {id:'sc4',lbl:'Kuhinja — dom',pose:'cooking or cleaning in kitchen, casual home moment.',sc:'home kitchen, countertops, natural light, warm and personal'},
-    {id:'sc5',lbl:'Zunaj hiše',pose:'standing in front of house or terrace, relaxed.',sc:'house exterior or terrace, garden visible, natural daylight'},
-  ],
-  fashion:[
-    {id:'sc1',lbl:'Ulica — mesto',pose:'walking on city street, candid street style, mid-stride.',sc:'urban city street, architecture, natural daylight'},
-    {id:'sc2',lbl:'Kavarna',pose:'sitting at cafe, relaxed, natural light, outfit visible.',sc:'stylish cafe interior, warm light, wooden surfaces'},
-    {id:'sc3',lbl:'Studio — editorial',pose:'standing, editorial fashion energy, confident.',sc:'minimal studio or white background'},
-    {id:'sc4',lbl:'Park',pose:'walking in park, natural movement, candid.',sc:'green urban park, trees and path, soft natural light'},
-    {id:'sc5',lbl:'Butik',pose:'browsing clothing, looking at items, candid shopping.',sc:'stylish boutique, clothing racks, warm interior lighting'},
-  ],
-  tech:[
-    {id:'sc1',lbl:'Pisarna — desk',pose:'sitting at desk with laptop, working, focused.',sc:'modern clean desk, laptop and tech accessories, soft office light'},
-    {id:'sc2',lbl:'Kavarna — laptop',pose:'sitting in cafe working on laptop, focused.',sc:'cafe, laptop on table, coffee nearby, soft natural light'},
-    {id:'sc3',lbl:'Doma — couch',pose:'sitting on couch with laptop, relaxed work from home.',sc:'modern home interior, couch, natural window light'},
-    {id:'sc4',lbl:'Na poti',pose:'standing or walking with phone, checking device.',sc:'urban environment, natural light, real city'},
-    {id:'sc5',lbl:'Event',pose:'standing at event, networking, candid moment.',sc:'modern event space or conference room, people blurred in background'},
-  ],
-  luxury:[
-    {id:'sc1',lbl:'Hotelska soba',pose:'standing in luxury hotel suite, relaxed elegant moment.',sc:'luxury hotel room, premium furnishings, soft warm lighting'},
-    {id:'sc2',lbl:'Fine dining',pose:'sitting at fine dining table, elegant posture.',sc:'upscale restaurant, candlelight, white tablecloth, refined'},
-    {id:'sc3',lbl:'Luxury street',pose:'walking on luxury shopping street, elegant and confident.',sc:'high-end shopping district, luxury store fronts'},
-    {id:'sc4',lbl:'Jahta / morje',pose:'standing on boat deck, looking at sea, relaxed luxury.',sc:'yacht deck or luxury boat, sea and sky, warm natural light'},
-    {id:'sc5',lbl:'Dom — interior',pose:'standing in luxury interior, elegant posture.',sc:'high-end home interior, premium furniture, soft warm lighting'},
-  ],
-  kids:[
-    {id:'sc1',lbl:'Dnevna soba — igra',pose:'sitting on floor with child, playing, genuine interaction.',sc:'warm family living room, toys, soft natural light'},
-    {id:'sc2',lbl:'Igrišče',pose:'outdoor at playground, active and happy, candid.',sc:'outdoor playground or park, children equipment, natural daylight'},
-    {id:'sc3',lbl:'Kuhinja — skupaj',pose:'in kitchen with child, baking together, candid warm moment.',sc:'warm home kitchen, baking items on counter, natural light'},
-    {id:'sc4',lbl:'Spalnica — rutina',pose:'sitting on bed reading to child, warm intimate moment.',sc:"child's bedroom, soft warm lighting, books and toys visible"},
-    {id:'sc5',lbl:'Narava',pose:'walking or playing outdoors with child, natural candid.',sc:'park or garden, natural daylight, green environment'},
-  ],
-  pet:[
-    {id:'sc1',lbl:'Doma — z ljubimcem',pose:'sitting on floor or couch with pet, genuine interaction.',sc:'warm home interior, pet visible, natural window light'},
-    {id:'sc2',lbl:'Sprehod — park',pose:'walking with dog on leash, outdoor candid.',sc:'park or urban street, natural daylight, authentic outdoor walk'},
-    {id:'sc3',lbl:'Vrt',pose:'playing with pet in garden, active candid moment.',sc:'home garden or yard, natural daylight, grass and plants'},
-    {id:'sc4',lbl:'Veterinar',pose:'holding or interacting with pet in care setting.',sc:'veterinary office or pet shop, clean professional environment'},
-    {id:'sc5',lbl:'Kavarna — terasa',pose:'sitting at outdoor cafe with pet nearby, relaxed lifestyle.',sc:'outdoor cafe terrace, tables and chairs, natural daylight'},
-  ],
-};
-const NOUTFITS={
-  beauty:[
-    {id:'ou1',lbl:'Jutranji ritual',ou:'soft silk or satin robe, slightly open, intimate morning wear. Barefoot. No jewelry, natural.'},
-    {id:'ou2',lbl:'Casual chic',ou:'clean white or neutral fitted t-shirt, high-waisted tailored trousers. Minimal jewelry. Fresh and effortless.'},
-    {id:'ou3',lbl:'Editorial',ou:'structured blazer over minimal top, tailored fit. Understated luxury.'},
-  ],
-  food:[
-    {id:'ou1',lbl:'Domači kuhar',ou:'casual linen apron over simple t-shirt, jeans. Sleeves rolled up. Natural and worn-in.'},
-    {id:'ou2',lbl:'Chef',ou:'white chef jacket or professional kitchen wear, slightly used. Practical and real.'},
-    {id:'ou3',lbl:'Casual lifestyle',ou:'casual comfortable outfit, light sweater or shirt, jeans. Relaxed.'},
-  ],
-  fitness:[
-    {id:'ou1',lbl:'Athletic wear',ou:'quality athletic leggings or shorts, fitted workout top. Functional, slightly worn from use.'},
-    {id:'ou2',lbl:'Post-workout',ou:'athletic joggers, oversized hoodie. Relaxed post-workout, comfortable and authentic.'},
-    {id:'ou3',lbl:'Outdoor active',ou:'athletic outdoor wear, running jacket, leggings. Practical for outdoor activity.'},
-  ],
-  home:[
-    {id:'ou1',lbl:'Vrtnar',ou:'worn gardening clothes, practical trousers, simple t-shirt. Dirt marks acceptable. Real and used.'},
-    {id:'ou2',lbl:'DIY',ou:'work clothes, worn jeans, flannel shirt. Practical and authentic, shows real use.'},
-    {id:'ou3',lbl:'Casual dom',ou:'comfortable casual home outfit, cotton trousers, soft t-shirt. Relaxed and personal.'},
-  ],
-  fashion:[
-    {id:'ou1',lbl:'Street style',ou:'current street fashion, interesting layering. Confident and effortless.'},
-    {id:'ou2',lbl:'Smart casual',ou:'quality tailored pieces, interesting textures. Elevated everyday look.'},
-    {id:'ou3',lbl:'Minimalist',ou:'clean minimal wardrobe, neutral tones, quality fabrics. Simple but refined.'},
-  ],
-  tech:[
-    {id:'ou1',lbl:'Smart casual',ou:'quality chinos, clean shirt or subtle sweater. Professional but approachable.'},
-    {id:'ou2',lbl:'Startup casual',ou:'clean jeans, quality t-shirt or hoodie. Modern and relaxed.'},
-    {id:'ou3',lbl:'Business casual',ou:'blazer over open collar shirt, tailored trousers.'},
-  ],
-  luxury:[
-    {id:'ou1',lbl:'Luxury casual',ou:'cashmere sweater or silk blouse, tailored trousers. No visible logos.'},
-    {id:'ou2',lbl:'Evening elegant',ou:'elegant evening attire, refined and sophisticated. Quality fabrics.'},
-    {id:'ou3',lbl:'Yacht / resort',ou:'linen or silk resort wear, relaxed elegant fit. Natural fabrics.'},
-  ],
-  kids:[
-    {id:'ou1',lbl:'Casual parent',ou:'comfortable casual parent outfit, jeans and soft sweater. Real and approachable.'},
-    {id:'ou2',lbl:'Active parent',ou:'casual active wear, comfortable and practical for movement.'},
-    {id:'ou3',lbl:'Smart casual',ou:'smart casual family-friendly outfit, neat but comfortable.'},
-  ],
-  pet:[
-    {id:'ou1',lbl:'Casual outdoor',ou:'casual outdoor outfit, comfortable jeans, practical jacket or sweater.'},
-    {id:'ou2',lbl:'Active casual',ou:'comfortable active wear, joggers, practical top. Ready for outdoor.'},
-    {id:'ou3',lbl:'Casual home',ou:'relaxed home outfit, soft comfortable clothes.'},
-  ],
-};
-const NVIDEOS={
-  beauty:[
-    {id:'vi1',lbl:'Nanašanje kreme',mot:'slowly applies product to face or hands with gentle deliberate motion, eyes closed or looking down, peaceful. Movement amplitude: very low.'},
-    {id:'vi2',lbl:'Ogledalo — reakcija',mot:'looking at reflection in mirror, slight satisfied expression, gently touches face or hair. Natural eye blinking. Movement amplitude: very low.'},
-    {id:'vi3',lbl:'Odkriva produkt',mot:'opens product packaging slowly, looks at it with genuine curiosity, subtle smile. Movement amplitude: low.'},
-    {id:'vi4',lbl:'Jutranja rutina',mot:'morning routine motion, picks up product from vanity, looks at it briefly, begins applying. Gentle and unhurried. Movement amplitude: low.'},
-  ],
-  food:[
-    {id:'vi1',lbl:'Meša / kuha',mot:'stirring in bowl or pot, looking down at food with focus, occasional glance up. Natural cooking motion. Movement amplitude: low.'},
-    {id:'vi2',lbl:'Okusi',mot:'tastes food from spoon, eyes close briefly, genuine satisfied expression. Natural and real. Movement amplitude: low.'},
-    {id:'vi3',lbl:'Reže / pripravlja',mot:'chopping ingredients on cutting board, focused and rhythmic motion. Movement amplitude: medium.'},
-    {id:'vi4',lbl:'Vonja jed',mot:'lifts plate toward face, closes eyes briefly and smells, genuine pleasure reaction. Movement amplitude: low.'},
-  ],
-  fitness:[
-    {id:'vi1',lbl:'Razteza se',mot:'slow controlled stretching motion, eyes closed or looking forward, focused. Movement amplitude: low.'},
-    {id:'vi2',lbl:'Pije vodo',mot:'lifts water bottle to drink, takes sip, sets it down, brief pause. Natural recovery. Movement amplitude: low.'},
-    {id:'vi3',lbl:'Diha — recovery',mot:'slow deep breath in, chest rises, holds briefly, exhales slowly. Calm recovery. Movement amplitude: very low.'},
-    {id:'vi4',lbl:'Ogrevanje',mot:'gentle warm-up motion, rolls shoulders or neck, looks forward, prepares. Movement amplitude: low.'},
-  ],
-  home:[
-    {id:'vi1',lbl:'Pregleda delo',mot:'steps back from task, crosses arms loosely, looks at completed work with quiet satisfaction. Movement amplitude: very low.'},
-    {id:'vi2',lbl:'Dela z orodjem',mot:'using tool with focused deliberate motion, looks at work surface, adjusts grip. Movement amplitude: medium.'},
-    {id:'vi3',lbl:'Zaliva rastlino',mot:'slowly waters plant, gentle and careful motion, looks at plants with care. Movement amplitude: low.'},
-    {id:'vi4',lbl:'Odpakira',mot:'sets down or opens package, looks at contents with interest and mild satisfaction. Movement amplitude: low.'},
-  ],
-  fashion:[
-    {id:'vi1',lbl:'Hodi mimo',mot:'confident natural walking motion, slight awareness of surroundings, effortless. Movement amplitude: medium.'},
-    {id:'vi2',lbl:'Popravlja obleko',mot:'subtly adjusts collar or sleeve, glances down briefly, looks up with calm confidence. Movement amplitude: very low.'},
-    {id:'vi3',lbl:'Gleda v izložbo',mot:'turns head to look at shop window, pauses briefly, continues. Candid street moment. Movement amplitude: low.'},
-    {id:'vi4',lbl:'Obrne se',mot:'slowly turns from side to face camera, natural and unhurried. Movement amplitude: low.'},
-  ],
-  tech:[
-    {id:'vi1',lbl:'Tipka na laptopu',mot:'typing on laptop, looks at screen, pauses to think, continues typing. Natural work motion. Movement amplitude: low.'},
-    {id:'vi2',lbl:'Bere ekran',mot:'reading content on screen, slight lean forward, eyes move, occasional subtle nod. Movement amplitude: very low.'},
-    {id:'vi3',lbl:'Dvigne pogled',mot:'slowly raises gaze from screen, expression shifts from focus to quiet reflection. Natural eye blink. Movement amplitude: very low.'},
-    {id:'vi4',lbl:'Razmišlja',mot:'pauses from work, looks away from screen, slight lean back, thinking expression, returns. Movement amplitude: low.'},
-  ],
-  luxury:[
-    {id:'vi1',lbl:'Drži uro / nakit',mot:'lifts wrist to look at watch or adjusts jewelry, slow elegant gesture, quiet appreciation. Movement amplitude: very low.'},
-    {id:'vi2',lbl:'Gleda skozi okno',mot:'standing at window, looking out, calm and contemplative. Elegant stillness. Movement amplitude: very low.'},
-    {id:'vi3',lbl:'Vzame kozarec',mot:'reaches for wine glass, lifts it slowly, looks at it briefly, takes slow sip. Elegant. Movement amplitude: low.'},
-    {id:'vi4',lbl:'Hodi elegantno',mot:'slow confident elegant walking motion, poised and aware but unhurried. Movement amplitude: low.'},
-  ],
-  kids:[
-    {id:'vi1',lbl:'Smeje se — iskren',mot:'genuine spontaneous laugh, eyes crinkle naturally, looks down or to side, real and warm. Movement amplitude: low.'},
-    {id:'vi2',lbl:'Gleda otroka',mot:'looks down with soft warm expression, slight smile, gentle and attentive. Movement amplitude: very low.'},
-    {id:'vi3',lbl:'Drži produkt',mot:'holds product naturally, looks at it briefly, looks up with warm approving expression. Movement amplitude: low.'},
-    {id:'vi4',lbl:'Pozdravlja',mot:'gentle natural wave or welcoming gesture, warm smile. Movement amplitude: low.'},
-  ],
-  pet:[
-    {id:'vi1',lbl:'Gleda žival',mot:'looks down at pet with warm affectionate expression, slight smile, gentle. Real connection. Movement amplitude: very low.'},
-    {id:'vi2',lbl:'Hodi s psom',mot:'natural walking motion with slight pull of leash, looks down at dog briefly, continues. Movement amplitude: medium.'},
-    {id:'vi3',lbl:'Drži žival',mot:'holds pet naturally in arms, gentle adjustment, looks at animal with genuine affection. Movement amplitude: low.'},
-    {id:'vi4',lbl:'Daje hrano',mot:'reaches down to place food bowl, looks at pet with caring expression, straightens up. Movement amplitude: low.'},
-  ],
-};
-const HAIR_COLORS=[
-  {id:'blonde',lbl:'Svetli',hex:'#E8D5A3',val:'blonde hair'},
-  {id:'lbrown',lbl:'Sv.rjavi',hex:'#A0724A',val:'light brown hair'},
-  {id:'dbrown',lbl:'T.rjavi',hex:'#5C3D2E',val:'dark brown hair'},
-  {id:'black',lbl:'Črni',hex:'#1a1a1a',val:'black hair'},
-  {id:'sp',lbl:'Sivo-t.',hex:'#888888',val:'salt-and-pepper hair'},
-  {id:'silver',lbl:'Sivi',hex:'#C0C0C0',val:'silver grey hair'},
-  {id:'auburn',lbl:'Rdeč.',hex:'#8B4513',val:'auburn red hair'},
-  {id:'plat',lbl:'Platin.',hex:'#F0EDE0',val:'platinum blonde hair'},
-];
-const EYE_COLORS=[
-  {id:'blue',lbl:'Modre',hex:'#4A90D9',val:'blue eyes'},
-  {id:'gbrown',lbl:'Zel-rj.',hex:'#6B8E4E',val:'green-brown hazel eyes'},
-  {id:'dbrown',lbl:'T.rjave',hex:'#3D1C02',val:'dark brown eyes'},
-  {id:'grey',lbl:'Sive',hex:'#8A9BA8',val:'grey eyes'},
-  {id:'hazel',lbl:'Hazel',hex:'#9B7653',val:'warm hazel eyes'},
-  {id:'green',lbl:'Zelene',hex:'#2D8A4E',val:'bright green eyes'},
-];
-const SKIN_COLORS=[
-  {id:'fair',lbl:'Svetla',hex:'#FDDBB4',val:'fair pale skin'},
-  {id:'light',lbl:'Sv.koža',hex:'#F0C896',val:'light skin tone'},
-  {id:'olive',lbl:'Olivna',hex:'#C68642',val:'olive Mediterranean skin'},
-  {id:'tan',lbl:'Bronasta',hex:'#A0522D',val:'warm tan bronze skin'},
-  {id:'brown',lbl:'Rjava',hex:'#7B4F2E',val:'medium brown skin'},
-  {id:'dark',lbl:'Temna',hex:'#4A2C0A',val:'dark rich skin tone'},
-];
-const FACE_TYPES=[
-  {id:'nordic',lbl:'Severni',icon:'◻',desc:'angular jaw, sharp features, deep-set eyes'},
-  {id:'mediteran',lbl:'Mediter.',icon:'◼',desc:'olive skin, strong nose, expressive features'},
-  {id:'latin',lbl:'Latinski',icon:'◈',desc:'warm tones, full lips, expressive eyes'},
-  {id:'eastasian',lbl:'Vzh.az.',icon:'◎',desc:'smooth skin, defined cheekbones, almond eyes'},
-  {id:'southasian',lbl:'Juž.az.',icon:'◉',desc:'dark expressive eyes, warm olive skin'},
-  {id:'african',lbl:'Afriški',icon:'●',desc:'rich dark skin, strong facial structure'},
-  {id:'mideast',lbl:'Bl.vzhod',icon:'◆',desc:'dark intense features, defined beard area'},
-  {id:'mixed',lbl:'Mešan',icon:'◇',desc:'unique blend of multiple ethnic features'},
-];
-
-// ─── CLAUDE API ───────────────────────────────────────────
-
-async function callClaude(messages,system,maxTokens=600){
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:maxTokens,
-      system:system,
-      messages:messages
-    })
-  });
-  const data=await res.json();
-  return data.content?.map(x=>x.text||'').join('')||'';
-}
-
-// API 1: Naravni jezik → nastavitve
-async function aiAnalyzeIntent(){
-  const txt=document.getElementById('ai-intent').value.trim();
-  if(!txt) return;
-  const btn=document.getElementById('btn-ai-intent');
-  const sp=document.getElementById('sp-intent');
-  const think=document.getElementById('think-intent');
-  btn.disabled=true;sp.style.display='inline-block';think.classList.add('vis');
-  document.getElementById('res-intent').classList.remove('vis');
-  try{
-    const reply=await callClaude([{role:'user',content:txt}],
-      `You are an AI character parameter extractor for an AI image generation tool. 
-Extract character parameters from the user's description and return ONLY a JSON object with these exact keys:
-{
-  "spol": "man" or "woman",
-  "starost": number,
-  "poklic": string,
-  "ime": string or "",
-  "niche": one of: beauty, food, fitness, home, fashion, tech, luxury, kids, pet,
-  "hairColor": one of: blonde, lbrown, dbrown, black, sp, silver, auburn, plat,
-  "eyeColor": one of: blue, gbrown, dbrown, grey, hazel, green,
-  "skinColor": one of: fair, light, olive, tan, brown, dark,
-  "faceType": one of: nordic, mediteran, latin, eastasian, southasian, african, mideast, mixed,
-  "explanation": brief 1-sentence explanation of choices in Slovenian
-}
-Return ONLY valid JSON, no other text.`,600);
-    const clean=reply.replace(/```json|```/g,'').trim();
-    const p=JSON.parse(clean);
-    // Apply to UI
-    if(p.spol) document.getElementById('spol').value=p.spol;
-    if(p.starost) document.getElementById('starost').value=p.starost;
-    if(p.poklic) document.getElementById('poklic').value=p.poklic;
-    if(p.ime) document.getElementById('ime').value=p.ime;
-    if(p.niche){selNiche(p.niche);}
-    if(p.hairColor){ST.hair=p.hairColor;selH(p.hairColor);}
-    if(p.eyeColor){ST.eye=p.eyeColor;selE(p.eyeColor);}
-    if(p.skinColor){ST.skin=p.skinColor;selS(p.skinColor);}
-    if(p.faceType){selFT(p.faceType);}
-    // Auto-select first purpose
-    if(!ST.purpose){selPurpose('product');}
-    lu();
-    document.getElementById('res-intent').innerHTML=`<strong>AI je nastavil:</strong> ${p.explanation||'Parametri nastavljeni glede na tvoj opis.'}`;
-    document.getElementById('res-intent').classList.add('vis');
-    document.getElementById('btn-p0').style.display='block';
-  }catch(e){
-    document.getElementById('res-intent').innerHTML=`<strong>Napaka:</strong> Ni bilo mogoče analizirati. Poskusi z ročno izbiro.`;
-    document.getElementById('res-intent').classList.add('vis');
-  }
-  btn.disabled=false;sp.style.display='none';think.classList.remove('vis');
-}
-
-// API 2: Analiza uploadane slike
-async function aiAnalyzeCharImage(b64,mimeType){
-  document.getElementById('ai-analyzing').style.display='flex';
-  try{
-    const reply=await callClaude([{
-      role:'user',
-      content:[
-        {type:'image',source:{type:'base64',media_type:mimeType,data:b64}},
-        {type:'text',text:'Analyze this AI-generated character image and describe what you see. Focus on: age, gender, face type/ethnicity, hair color and style, eye color, skin tone, facial features, body type visible, clothing style, mood/expression, lighting, background/scene. Be specific and concise. Respond in Slovenian, max 3 sentences.'}
-      ]
-    }],'You are an AI image analyst for a character generator tool. Analyze generated character images accurately and concisely.',400);
-    document.getElementById('char-uploaded-sub').textContent=reply;
-    document.getElementById('ai-analysis-text').textContent=reply;
-    document.getElementById('ai-analysis-card').classList.add('vis');
-  }catch(e){
-    document.getElementById('char-uploaded-sub').textContent='Analiza ni bila mogoča. Karakter je vseeno zaklenjen.';
-  }
-  document.getElementById('ai-analyzing').style.display='none';
-}
-
-// API 3: Ocena prompta
-async function aiEvalPrompt(){
-  const prompt=document.getElementById('pt-main').textContent;
-  if(!prompt||prompt==='—') return;
-  await runEval(prompt,'btn-eval','sp-eval','eval-result');
-}
-async function aiEvalLibPrompt(){
-  const prompt=document.getElementById('pt-lib').textContent;
-  if(!prompt||prompt==='—') return;
-  await runEval(prompt,'btn-eval-lib','sp-eval-lib','eval-result-lib');
-}
-async function runEval(prompt,btnId,spId,resId){
-  const btn=document.getElementById(btnId);
-  const sp=document.getElementById(spId);
-  const res=document.getElementById(resId);
-  btn.disabled=true;sp.style.display='inline-block';res.classList.remove('vis');
-  try{
-    const reply=await callClaude([{role:'user',content:`Evaluate this AI image generation prompt:\n\n${prompt}`}],
-      `You are an expert AI image prompt evaluator for Higgsfield AI. Evaluate prompts for the 10-layer AI Universa protocol.
-Return ONLY a JSON object:
-{
-  "score": number 1-10,
-  "strengths": ["strength1", "strength2"],
-  "weaknesses": ["weakness1"],  
-  "suggestion": "one specific improvement suggestion in Slovenian",
-  "missing_layers": ["layer names that are weak or missing"]
-}
-Return ONLY valid JSON.`,500);
-    const clean=reply.replace(/```json|```/g,'').trim();
-    const p=JSON.parse(clean);
-    const scoreClass=p.score>=8?'score-good':p.score>=6?'score-warn':'score-bad';
-    let html=`<div class="eval-score">
-      <span class="score-pill ${scoreClass}">${p.score}/10</span>
-      ${(p.missing_layers||[]).map(l=>`<span class="score-pill score-warn">${l}</span>`).join('')}
-    </div>`;
-    if(p.strengths?.length) html+=`<div style="margin-bottom:6px"><strong style="color:var(--green-light)">Dobro:</strong> ${p.strengths.join(', ')}</div>`;
-    if(p.weaknesses?.length) html+=`<div style="margin-bottom:6px"><strong style="color:#ef9f27">Slabo:</strong> ${p.weaknesses.join(', ')}</div>`;
-    if(p.suggestion) html+=`<div><strong style="color:var(--blue-light)">Predlog:</strong> ${p.suggestion}</div>`;
-    res.innerHTML=html;
-    res.classList.add('vis');
-  }catch(e){
-    res.innerHTML='<span style="color:var(--text3)">Ocena ni bila mogoča.</span>';
-    res.classList.add('vis');
-  }
-  btn.disabled=false;sp.style.display='none';
-}
-
-// ─── CORE LOGIC ────────────────────────────────────────────
-
-function initAll(){
-  document.getElementById('pgrid').innerHTML=PURPOSES.map(p=>
-    `<div class="purpose-card" id="pu-${p.id}" onclick="selPurpose('${p.id}')"><div class="purpose-dot"></div><div class="purpose-name">${p.name}</div></div>`
-  ).join('');
-  document.getElementById('ngrid').innerHTML=NICHES.map(n=>
-    `<div class="niche-card" id="ni-${n.id}" onclick="selNiche('${n.id}')"><div class="niche-icon">${n.icon}</div><div class="niche-name">${n.name}</div><div class="niche-desc">${n.desc}</div></div>`
-  ).join('');
-  document.getElementById('placement-grid').innerHTML=PLACEMENTS.map(p=>
-    `<div class="placement-card" id="pl-${p.id}" onclick="selPlacement('${p.id}')"><div class="placement-icon">${p.icon}</div><div class="placement-name">${p.name}</div></div>`
-  ).join('');
-  function mkSw(cid,arr,activeId,fn){
-    document.getElementById(cid).innerHTML=arr.map(x=>
-      `<div class="sw-item"><div class="sw${x.id===activeId?' active':''}" id="sw${cid}${x.id}" style="background:${x.hex};${x.id===activeId?'border-color:var(--accent)':''}" onclick="${fn}('${x.id}')" title="${x.lbl}"></div><div class="sw-lbl">${x.lbl}</div></div>`
-    ).join('');
-  }
-  mkSw('sw-hair',HAIR_COLORS,'lbrown','selH');
-  mkSw('sw-eyes',EYE_COLORS,'gbrown','selE');
-  mkSw('sw-skin',SKIN_COLORS,'olive','selS');
-  document.getElementById('ftgrid').innerHTML=FACE_TYPES.map(f=>
-    `<div class="ftcard${f.id==='mediteran'?' active':''}" id="ft-${f.id}" onclick="selFT('${f.id}')"><div class="ftcard-icon">${f.icon}</div><div class="ftcard-lbl">${f.lbl}</div><div class="ftcard-desc">${f.desc.split(',')[0]}</div></div>`
-  ).join('');
-}
-
-function selPurpose(id){ST.purpose=id;document.querySelectorAll('.purpose-card').forEach(x=>x.classList.remove('active'));document.getElementById('pu-'+id).classList.add('active');checkBtn();lu();}
-function selNiche(id){ST.niche=id;document.querySelectorAll('.niche-card').forEach(x=>x.classList.remove('active'));document.getElementById('ni-'+id).classList.add('active');applyPreset(id);checkBtn();lu();}
-function selPlacement(id){ST.placement=id;document.querySelectorAll('.placement-card').forEach(x=>x.classList.remove('active'));document.getElementById('pl-'+id).classList.add('active');lu();}
-function checkBtn(){document.getElementById('btn-p0').style.display=(ST.niche&&ST.purpose)?'block':'none';}
-function applyPreset(nid){
-  const p=NPRESET[nid];if(!p) return;
-  setCI('c-l01',p.l01);setCI('c-l02',p.l02);setCI('c-l03',p.l03);
-  setCI('c-l05',p.l05);setCI('c-l06',p.l06);
-  ['c-l07','c-l08','c-l09','c-l10'].forEach((g,i)=>setCI(g,[p.l07,p.l08,p.l09,p.l10][i]));
-  setCI('c-expr',p.expr);setCI('c-angle',p.angle);
-  setCI('c-body',p.bodyIdx);setCI('c-ostyle',p.ostyle);
-}
-function selH(id){ST.hair=id;updSw('sw-hair',id);lu();}
-function selE(id){ST.eye=id;updSw('sw-eyes',id);lu();}
-function selS(id){ST.skin=id;updSw('sw-skin',id);lu();}
-function selFT(id){ST.face=id;document.querySelectorAll('.ftcard').forEach(x=>x.classList.remove('active'));document.getElementById('ft-'+id)?.classList.add('active');lu();}
-function updSw(prefix,id){
-  document.querySelectorAll(`[id^="sw${prefix}"]`).forEach(el=>{el.classList.remove('active');el.style.borderColor='transparent';});
-  const el=document.getElementById('sw'+prefix+id);
-  if(el){el.classList.add('active');el.style.borderColor='var(--accent)';}
-}
-function setCI(gid,idx){document.querySelectorAll('#'+gid+' .chip').forEach((c,i)=>c.classList.toggle('active',i===idx));}
-function getAL(gid){const a=document.querySelector('#'+gid+' .chip.active');return a?a.textContent.trim():'—';}
-
-function lu(){
-  const ime=gv('ime')||'—',st=gv('starost'),pk=gv('poklic');
-  const h=HAIR_COLORS.find(x=>x.id===ST.hair);
-  const e=EYE_COLORS.find(x=>x.id===ST.eye);
-  const s=SKIN_COLORS.find(x=>x.id===ST.skin);
-  const f=FACE_TYPES.find(x=>x.id===ST.face);
-  const ni=NICHES.find(x=>x.id===ST.niche);
-  const pu=PURPOSES.find(x=>x.id===ST.purpose);
-  document.getElementById('sum-name').textContent=ime;
-  document.getElementById('sum-role').textContent=(st?st+' let':'')+(pk?', '+pk:'')+(ni?' · '+ni.name:'');
-  let badges='';
-  if(ni) badges+=`<span class="niche-badge">${ni.icon} ${ni.name}</span>`;
-  if(pu) badges+=`<span class="purpose-badge">${pu.name}</span>`;
-  document.getElementById('sum-badges').innerHTML=badges;
-  sv('sv-face',f?f.lbl+' — '+f.desc.split(',')[0]:'—');
-  sv('sv-hair',(h?.lbl||'—')+' · '+getAL('c-hlen'));
-  sv('sv-eyes',e?.lbl||'—');
-  sv('sv-skin',s?.lbl||'—');
-  sv('sv-fdet',getAL('c-fdet'));
-  sv('sv-expr',getAL('c-expr'));
-  sv('sv-l06',getAL('c-l06'));
-  sv('sv-l03',getAL('c-l03'));
-  sv('sv-l08',getAL('c-l08'));
-  sv('sv-l10',getAL('c-l10'));
-  const pn=gv('prod-name'),pp=PLACEMENTS.find(x=>x.id===ST.placement);
-  if(prodImg||pn){
-    document.getElementById('prod-sum').classList.add('vis');
-    document.getElementById('prod-sum-name').textContent=pn||'Produkt';
-    document.getElementById('prod-sum-sub').textContent=pp?'Postavitev: '+pp.name:'—';
-    if(prodImg) document.getElementById('prod-sum-img').style.display='block';
-  }
-  if(cur===3) genMain();
-  if(cur===5) genLib();
-}
-function sv(id,val){const el=document.getElementById(id);if(el){el.textContent=val;el.className='sum-val'+(val&&val!=='—'?' set':'');}}
-function gc(id){const a=document.querySelector('#'+id+' .chip.active');return a?a.dataset.val:'';}
-function gv(id){const el=document.getElementById(id);return el?el.value.trim():'';}
-
-function getPhysDesc(){
-  const h=HAIR_COLORS.find(x=>x.id===ST.hair)||HAIR_COLORS[1];
-  const e=EYE_COLORS.find(x=>x.id===ST.eye)||EYE_COLORS[1];
-  const s=SKIN_COLORS.find(x=>x.id===ST.skin)||SKIN_COLORS[2];
-  const f=FACE_TYPES.find(x=>x.id===ST.face)||FACE_TYPES[1];
-  return `${s.val}. ${f.desc}. ${gc('c-hlen')}, ${h.val}, ${gc('c-htex')||'slightly disheveled'}. ${e.val}. ${gc('c-fdet')||'natural features'}. ${gc('c-body')||'natural proportions'}.`;
-}
-function getProdLine(){
-  const pn=gv('prod-name'),pd=gv('prod-desc');
-  const pp=PLACEMENTS.find(x=>x.id===ST.placement);
-  const ppos=gc('c-prodpos');
-  if(!pn&&!pp) return '';
-  let line='';
-  if(pp) line+=pp.val+'. ';
-  if(pn) line+=`The product is "${pn}"${pd?', '+pd:''}. `;
-  if(ppos) line+=ppos+'.';
-  return line.trim();
-}
-function buildPrompt(pose,sceneOvr,outfitOvr,withProduct){
-  const ime=gv('ime')||'Subject',st=gv('starost')||'30';
-  const sp=gv('spol')==='woman'?'woman':'man',pk=gv('poklic')||'professional';
-  const scene=sceneOvr||(gc('c-l03')||'pure white seamless background, clean neutral studio');
-  const outf=outfitOvr||((gv('outfit')||'simple quality clothing')+'. '+(gc('c-ostyle')||'smart casual'));
-  const prodLine=withProduct?getProdLine():'';
-  return `LAYER 01: ${gc('c-l01')||'hyper-realistic, editorial photograph'}
-
-LAYER 02: ${st}-year-old ${sp} named ${ime}, ${pk}. ${getPhysDesc()} ${gc('c-l02')||'confident, self-assured'}. ${gc('c-expr')||'genuine subtle smile'}. ${pose}${prodLine?' '+prodLine:''} ${gc('c-angle')||'eye level camera angle'}.
-
-LAYER 03: ${scene}
-
-LAYER 04: ${outf}
-
-LAYER 05: ${gc('c-l05')||'85mm lens, shallow depth of field, soft bokeh'}
-
-LAYER 06: ${gc('c-l06')||'soft natural window light, warm golden tones'}
-
-LAYER 07: ${gc('c-l07')||'clean minimal atmosphere'}
-
-LAYER 08: ${gc('c-l08')||'clean natural grading, true-to-life colors'}
-
-LAYER 09: ${gc('c-l09')||'natural skin, healthy glow, minor imperfections'}
-
-LAYER 10: ${gc('c-l10')||'focused, present and purposeful'}`;
-}
-
-const NEG="perfect skin, plastic skin, airbrushed, studio lighting, symmetrical, 3D render, CGI, cartoon, doll-like, professional model pose, beauty filter, too sharp, overly lit, wet hair, greasy hair";
-
-const SHOTS={
-  portrait:[
-    {id:'p-front',lbl:'Frontalni',pose:'close portrait head and shoulders, looking straight into camera, natural and confident.'},
-    {id:'p-34',lbl:'3/4 kot',pose:'close portrait, head and body turned 3/4, gaze slightly off-camera.'},
-    {id:'p-profil',lbl:'Profil',pose:'close portrait, pure side profile, gaze into distance.'},
-  ],
-  fullbody:[
-    {id:'fb-front',lbl:'Spredaj',pose:'full body head to toe, facing camera, weight on one leg.'},
-    {id:'fb-34',lbl:'3/4 kot',pose:'full body, 3/4 angle, head slightly toward camera, one hand mid-gesture.'},
-    {id:'fb-back',lbl:'Zadaj',pose:'full body from behind, back to camera, head slightly turned.'},
-  ]
-};
-
-function getNicheLib(){
-  const nid=ST.niche||'beauty';
-  return {
-    outfit:(NOUTFITS[nid]||NOUTFITS.beauty).map(x=>({id:x.id,lbl:x.lbl,pose:'full body head to toe, standing naturally, slightly off camera.',sc:null,ou:x.ou,withProd:false})),
-    scene:(NSCENES[nid]||NSCENES.beauty).map(x=>({id:x.id,lbl:x.lbl,pose:x.pose,sc:x.sc,ou:null,withProd:false})),
-    video:(NVIDEOS[nid]||NVIDEOS.beauty).map(x=>({id:x.id,lbl:x.lbl,mot:x.mot})),
-    product:[
-      {id:'pr-hero',lbl:'Hero shot',pose:'full body or half body, product clearly in focus with character, confident natural presentation.',withProd:true,sc:null,ou:null},
-      {id:'pr-life',lbl:'Lifestyle',pose:'candid lifestyle moment, naturally using or holding product, not looking at camera.',withProd:true,sc:null,ou:null},
-      {id:'pr-close',lbl:'Close-up',pose:'close portrait, product partially in frame near face or hands, natural and intimate.',withProd:true,sc:null,ou:null},
-      {id:'pr-story',lbl:'Story / vertical',pose:'vertical framing, full body or half body, product visible, social media story.',withProd:true,sc:null,ou:null},
-    ]
-  };
-}
-
-function pgr(){
-  document.getElementById('pgbar').innerHTML=PHASES.map((p,i)=>{
-    const cls=i<cur?'done':i===cur?'active':'';
-    return (i>0?`<div class="prog-line${i<=cur?' done':''}"></div>`:'')+
-      `<div class="prog-step"><div class="prog-dot ${cls}">${i<cur?'✓':i+1}</div><div class="prog-label ${cls}">${p.name}</div></div>`;
-  }).join('');
-}
-function plist(){
-  document.getElementById('plist').innerHTML=PHASES.map((p,i)=>{
-    const cls=i<cur?'done':i===cur?'current':'locked';
-    return `<div class="phase-item ${cls}"><div class="phase-pdot"></div><div class="phase-item-name">${p.name}</div><div class="phase-item-tag">${p.tag}</div></div>`;
-  }).join('');
-}
-function goTo(n){
-  document.getElementById('phase-'+cur).classList.remove('active');
-  cur=n;
-  document.getElementById('phase-'+n).classList.add('active');
-  pgr();plist();lu();
-  if(n===3){rdrShots();genMain();}
-  if(n===5){rdrLib();}
-}
-function rdrShots(){
-  const list=SHOTS[shotType]||[];
-  document.getElementById('shot-row').innerHTML=list.map((s,i)=>
-    `<button class="shot-btn${i===0?' active':''}" id="sb-${s.id}" onclick="selS2('${s.id}')">${s.lbl}</button>`
-  ).join('');
-  selShot=list[0]?.id;
-}
-function selS2(id){
-  const list=SHOTS[shotType]||[];
-  list.forEach(s=>{const el=document.getElementById('sb-'+s.id);if(el)el.classList.toggle('active',s.id===id);});
-  selShot=id;genMain();
-}
-function setType(t){
-  shotType=t;['portrait','fullbody'].forEach(x=>document.getElementById('tc-'+x).classList.toggle('active',x===t));
-  rdrShots();genMain();
-}
-function genMain(){
-  const list=SHOTS[shotType]||[];
-  const s=list.find(x=>x.id===selShot)||list[0];
-  if(!s) return;
-  document.getElementById('pt-main').textContent=buildPrompt(s.pose);
-  document.getElementById('nt-main').textContent=NEG+(shotType==='fullbody'?', cropped body, portrait only':'');
-}
-
-async function handleCharUpload(evt){
-  const f=evt.target.files[0];if(!f) return;
-  const url=URL.createObjectURL(f);
-  charImgs.push(url);
-  document.getElementById('char-upload-zone').style.display='none';
-  const cu=document.getElementById('char-uploaded');
-  cu.classList.add('vis');
-  document.getElementById('char-thumb').src=url;
-  document.getElementById('ai-analysis-img').src=url;
-  document.getElementById('char-uploaded-sub').textContent='Analiziram sliko z AI...';
-  // Convert to base64 for API
-  const reader=new FileReader();
-  reader.onload=async()=>{
-    const b64=reader.result.split(',')[1];
-    const mt=f.type||'image/jpeg';
-    charImgB64={data:b64,type:mt};
-    await aiAnalyzeCharImage(b64,mt);
-    setTimeout(()=>goTo(4),800);
-  };
-  reader.readAsDataURL(f);
-}
-
-function handleProdUpload(evt){
-  const f=evt.target.files[0];if(!f) return;
-  const url=URL.createObjectURL(f);
-  prodImg=url;
-  const prev=document.getElementById('prod-preview');
-  prev.src=url;prev.style.display='block';
-  document.getElementById('prod-ph').style.display='none';
-  document.getElementById('prod-upload-area').classList.add('has-image');
-  document.getElementById('prod-sum-img').src=url;
-  lu();
-}
-
-function rdrLib(){
-  const lib=getNicheLib();
-  const basePortrait=[
-    {id:'lp-f',lbl:'Frontalni',pose:'close portrait, head and shoulders, straight into camera.',sc:null,ou:null},
-    {id:'lp-34',lbl:'3/4 kot',pose:'close portrait, 3/4 angle, gaze slightly off-camera.',sc:null,ou:null},
-    {id:'lp-pr',lbl:'Profil',pose:'close portrait, pure side profile.',sc:null,ou:null},
-  ];
-  const baseFullbody=[
-    {id:'lfb-f',lbl:'Spredaj',pose:'full body head to toe, facing camera.',sc:null,ou:null},
-    {id:'lfb-34',lbl:'3/4 kot',pose:'full body, 3/4 angle, one hand mid-gesture.',sc:null,ou:null},
-    {id:'lfb-b',lbl:'Zadaj',pose:'full body from behind, back to camera.',sc:null,ou:null},
-  ];
-  const list=libType==='portrait'?basePortrait:libType==='fullbody'?baseFullbody:libType==='outfit'?lib.outfit:libType==='scene'?lib.scene:libType==='product'?lib.product:lib.video;
-  document.getElementById('lib-shot-row').innerHTML=list.map((s,i)=>
-    `<button class="shot-btn${i===0?' active':''}" id="ls-${s.id}" onclick="selL('${s.id}')">${s.lbl}</button>`
-  ).join('');
-  selLib=list[0]?.id;genLib();
-}
-function selL(id){
-  document.querySelectorAll('[id^="ls-"]').forEach(el=>el.classList.remove('active'));
-  document.getElementById('ls-'+id)?.classList.add('active');
-  selLib=id;genLib();
-}
-function setLib(t){
-  libType=t;
-  ['portrait','fullbody','outfit','scene','product','video'].forEach(x=>document.getElementById('lib-'+x).classList.toggle('active',x===t));
-  rdrLib();
-}
-
-function genLib(){
-  const lib=getNicheLib();
-  const all=[
-    {id:'lp-f',pose:'close portrait, head and shoulders, straight into camera.',sc:null,ou:null},
-    {id:'lp-34',pose:'close portrait, 3/4 angle, gaze slightly off-camera.',sc:null,ou:null},
-    {id:'lp-pr',pose:'close portrait, pure side profile.',sc:null,ou:null},
-    {id:'lfb-f',pose:'full body head to toe, facing camera.',sc:null,ou:null},
-    {id:'lfb-34',pose:'full body, 3/4 angle, one hand mid-gesture.',sc:null,ou:null},
-    {id:'lfb-b',pose:'full body from behind, back to camera.',sc:null,ou:null},
-    ...(lib.outfit||[]),...(lib.scene||[]),...(lib.product||[]),
-  ];
-  const item=all.find(x=>x.id===selLib)||(lib.video||[]).find(x=>x.id===selLib);
-  if(!item) return;
-  let pt='',nt=NEG;
-  if(libType==='video'){
-    const vitem=(lib.video||[]).find(x=>x.id===selLib)||(lib.video||[])[0];
-    if(!vitem) return;
-    const sp=gv('spol')==='woman'?'Woman':'Man',pk=gv('poklic')||'person';
-    pt=`Subtle realistic human motion. ${sp}, ${pk}. ${vitem.mot} Natural eye blinking, slow chest movement from breathing. Camera completely static, no movement, no zoom, no pan.`;
-    nt="fast movement, talking exaggeratedly, walking off frame, camera movement, zoom, pan, morphing, distortion, unnatural motion, too smooth, CGI, blurry face, materializing objects";
-  } else {
-    pt=buildPrompt(item.pose,item.sc||undefined,item.ou||undefined,item.withProd||false);
-    if(libType==='fullbody') nt=NEG+', cropped body, portrait only';
-    if(libType==='scene') nt=NEG+', posing, looking at camera, staged';
-    if(libType==='product') nt=NEG+', product floating, product distorted, no product visible';
-  }
-  document.getElementById('pt-lib').textContent=pt;
-  document.getElementById('nt-lib').textContent=nt;
-  const rb=document.getElementById('rbox');
-  rb.style.display='block';
-  const refs=charImgs.length?charImgs.slice(0,3).map(u=>`<img class="ref-img" src="${u}" alt="ref">`).join(''):'<span style="font-size:11px;color:var(--text3)">Uploadaj character sliko za reference thumbnails</span>';
-  document.getElementById('rimgs').innerHTML=refs+(prodImg&&libType==='product'?`<img class="ref-img" src="${prodImg}" alt="produkt" style="border-color:var(--green-light)">`:'' );
-}
-
-function togSec(id){document.getElementById(id).classList.toggle('open');}
-function cp(id,btn){
-  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{const o=btn.textContent;btn.textContent='✓ Kopirano';setTimeout(()=>btn.textContent=o,2000);});
-}
-function cpAll(pid,nid,btn){
-  const p=document.getElementById(pid).textContent,n=document.getElementById(nid).textContent;
-  navigator.clipboard.writeText('PROMPT:\n'+p+'\n\nNEGATIVE PROMPT:\n'+n).then(()=>{btn.textContent='✓ Kopirano';setTimeout(()=>btn.textContent='Kopiraj vse ↗',2000);});
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
-  initAll();pgr();plist();lu();
-  document.querySelectorAll('.chip-group').forEach(g=>{
-    g.querySelectorAll('.chip').forEach(c=>{
-      c.addEventListener('click',()=>{g.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');lu();});
-    });
-  });
-  // Enter key on intent textarea
-  document.getElementById('ai-intent').addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();aiAnalyzeIntent();}
-  });
-});
-</script>
+<script src="js/data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/prompts.js"></script>
+<script src="js/ui.js"></script>
 </body>
 </html>
